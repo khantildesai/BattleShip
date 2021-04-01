@@ -52,8 +52,18 @@ void DrawCursor(int gridx, int gridy);
 
 volatile int pixel_buffer_start; // global variable
 
+//global variables
+int Player1GameBoard[10][10];
+int Player2GameBoard[10][10];
+
 int main(void)
 {
+	for (int P1GBSetter = 0; P1GBSetter < 10; P1GBSetter++){
+		for (int P1GBSetter2 = 0; P1GBSetter2 < 10; P1GBSetter2++){
+			Player1GameBoard[P1GBSetter][P1GBSetter2] = 0;
+			Player2GameBoard[P1GBSetter][P1GBSetter2] = 0;
+		}
+	}
     volatile int *pixel_ctrl_ptr = (int *)PIXEL_BUF_CTRL_BASE;
     /* Read location of the pixel buffer from the pixel buffer controller */
     pixel_buffer_start = *pixel_ctrl_ptr;
