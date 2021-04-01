@@ -34,6 +34,9 @@
 
 /*Game constants*/
 #define GRID_WIDTH 23
+#define DIST_NEXT 24 //Add to postion to get same spot in next square
+#define GRID_BASE_X 41
+#define GRIDE_BASE_Y 0
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -44,6 +47,8 @@ void swap(int *, int *);
 void clear_screen();
 void draw_line(int x0, int y0, int x1, int y1, short int line_color);
 void DrawGrid();
+void DrawCursor(int gridx, int gridy);
+
 
 volatile int pixel_buffer_start; // global variable
 
@@ -55,7 +60,6 @@ int main(void)
 
     clear_screen();
     DrawGrid();
-    //draw_line(0, 0, 150, 150, 0x001F); // this line is blue
 }
 
 void plot_pixel(int x, int y, short int line_color)
@@ -154,16 +158,31 @@ void Setup()
 {
 }
 
+//Draws game grid
 void DrawGrid()
 {
     //Draws Rows
     for (int row = 0; row < 10; row++)
-    { 
-        draw_line(40,24+24*row,280,24 +24*row,GREY);
+    {
+        draw_line(40, 23 + 24 * row, 280, 23 + 24 * row, GREY);
     }
     //Draws columns
     for (int col = 0; col < 11; col++)
     {
-        draw_line(40+24*col,0,40 + 24*col,RESOLUTION_Y - 1,GREY);
+        draw_line(40 + 24 * col, 0, 40 + 24 * col, RESOLUTION_Y - 1, GREY);
     }
+}
+
+//Draws Cursor on specified square
+void DrawCursor(int gridx, int gridy)
+{
+    //gets top left pixel position
+    int x0 = GRID_BASE_X + gridx * DIST_NEXT;
+    int y0 = gridy * DIST_NEXT;
+
+    //Draws the 4 line segments
+    draw_line(x0, y0, 63 + gridx * 24, y0, RED);   // top
+    draw_line(x0, 22 + y0, 22 + x0, 22 + y0, RED); // bot
+    draw_line(x0, gridy * 24, x0, 22 + y0, RED);   // left
+    draw_line(22 + x0, y0, 22 + x0, 22 + y0, RED); // right
 }
