@@ -53,11 +53,24 @@ void DrawCursor(int gridx, int gridy);
 volatile int pixel_buffer_start; // global variable
 
 //global variables
+//Player GameBoards 0 = not attacked, 1 = attacked and missed, 2 = attacked and hit
 int Player1GameBoard[10][10];
 int Player2GameBoard[10][10];
 
+//ship segment class w/h default values
+//EX:
+//ShipSegment seg1 = ShipSegmentDefault;
+struct ShipSegmentS{
+	bool hit; //default not hit
+	int type; //0 = hull, 1 = stern, 2 = bow
+	int X;	//X coord (on gameboard grid (0-9))
+	int Y;  //Y coord (on gameboard grid (0-9))
+} ShipSegmentDefault = {false};
+typedef struct ShipSegmentS ShipSegment;
+
 int main(void)
 {
+	//setting  Player GameBoards to all 0 (empty)
 	for (int P1GBSetter = 0; P1GBSetter < 10; P1GBSetter++){
 		for (int P1GBSetter2 = 0; P1GBSetter2 < 10; P1GBSetter2++){
 			Player1GameBoard[P1GBSetter][P1GBSetter2] = 0;
