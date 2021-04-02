@@ -262,7 +262,9 @@ void ChooseHitPlacement()
     while (count < 5)
     {
         char key = WaitForButtonPress();
-
+        if(key == 'X'){
+            break;
+        }
         if (key == '>')
         { //Right
             x_start++;
@@ -288,19 +290,29 @@ void ChooseHitPlacement()
         DrawCursor(x_start, y_start);
         //count++;
     }
+    printf("SHOTS FIYAED AT (%d, %d)", x_start, y_start);
 }
 
 char WaitForButtonPress()
 {
     volatile int *key_ptr = (int *)KEY_BASE;
+    volatile int *sw_ptr = (int *)SW_BASE;
+
     *(key_ptr + 2) = 0xF;
     *(key_ptr + 3) = 0xF;
 
     int key_val = *(key_ptr + 3);
-
+    int sw_val = 0;
+    bool upDown = 0;
     while (key_val == 0)
     {
         key_val = *(key_ptr + 3);
+        sw_val = *(sw_ptr);
+        if((sw_val & 0x1) == 1){
+            upDown = 1; 
+        }else if (upDown){
+            return 'X';
+        }
     }
 
     if (key_val == 1) //KEY0
@@ -319,6 +331,7 @@ char WaitForButtonPress()
     {                      //LEFT
         return '<';
     }
+    return 'L';
 }
 //void draw_line(int x0, int y0, int x1, int y1, short int line_color)
 void drawShipSegment(ShipSegment seg, short int colour){
