@@ -42,14 +42,6 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-void Setup();
-void swap(int *, int *);
-void clear_screen();
-void draw_line(int x0, int y0, int x1, int y1, short int line_color);
-void DrawGrid();
-void DrawCursor(int gridx, int gridy);
-
-
 volatile int pixel_buffer_start; // global variable
 
 //global variables
@@ -67,6 +59,36 @@ struct ShipSegmentS{
 	int Y;  //Y coord (on gameboard grid (0-9))
 } ShipSegmentDefault = {false};
 typedef struct ShipSegmentS ShipSegment;
+
+//Ship class with default Ship types
+//EX:
+//Ship playerCarrier = Carrier;
+struct Ship{
+	bool sunk; //default not sunk
+	short int colour; //color number (using macros defined above)
+	int type; // 0 = Aircraft Carrier, 1 = Battleship, 2 = Destroyer, 3 = Submarine, 4 = Patrol Boat
+	ShipSegment Segments[];
+};
+typedef struct Ship Ship;
+Ship Carrier = {false, BLUE, 0};
+Ship Battleship = {false, GREEN, 1};
+Ship Destroyer = {false, CYAN, 2};
+Ship Submarine = {false, MAGENTA, 3};
+Ship PatrolBoat = {false, GREY, 4};
+
+//Player struct
+struct Player{
+	bool won;
+	Ship Ships[];
+};
+
+void Setup();
+void swap(int *, int *);
+void clear_screen();
+void draw_line(int x0, int y0, int x1, int y1, short int line_color);
+void DrawGrid();
+void DrawCursor(int gridx, int gridy);
+void drawShipSegment(ShipSegment seg);
 
 int main(void)
 {
