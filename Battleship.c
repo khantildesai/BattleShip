@@ -52,22 +52,24 @@ int Player2GameBoard[10][10];
 //ship segment class w/h default values
 //EX:
 //ShipSegment seg1 = ShipSegmentDefault;
-struct ShipSegmentS{
-	bool hit; //default not hit
-	int type; //0 = hull, 1 = stern, 2 = bow
-	int X;	//X coord (on gameboard grid (0-9))
-	int Y;  //Y coord (on gameboard grid (0-9))
+struct ShipSegmentS
+{
+    bool hit; //default not hit
+    int type; //0 = hull, 1 = stern, 2 = bow
+    int X;    //X coord (on gameboard grid (0-9))
+    int Y;    //Y coord (on gameboard grid (0-9))
 } ShipSegmentDefault = {false};
 typedef struct ShipSegmentS ShipSegment;
 
 //Ship class with default Ship types
 //EX:
 //Ship playerCarrier = Carrier;
-struct Ship{
-	bool sunk; //default not sunk
-	short int colour; //color number (using macros defined above)
-	int type; // 0 = Aircraft Carrier, 1 = Battleship, 2 = Destroyer, 3 = Submarine, 4 = Patrol Boat
-	ShipSegment Segments[];
+struct Ship
+{
+    bool sunk;        //default not sunk
+    short int colour; //color number (using macros defined above)
+    int type;         // 0 = Aircraft Carrier, 1 = Battleship, 2 = Destroyer, 3 = Submarine, 4 = Patrol Boat
+    ShipSegment Segments[];
 };
 typedef struct Ship Ship;
 Ship Carrier = {false, BLUE, 0};
@@ -77,9 +79,10 @@ Ship Submarine = {false, MAGENTA, 3};
 Ship PatrolBoat = {false, GREY, 4};
 
 //Player struct
-struct Player{
-	bool won;
-	Ship Ships[];
+struct Player
+{
+    bool won;
+    Ship Ships[];
 };
 
 void Setup();
@@ -89,16 +92,21 @@ void draw_line(int x0, int y0, int x1, int y1, short int line_color);
 void DrawGrid();
 void DrawCursor(int gridx, int gridy);
 void drawShipSegment(ShipSegment seg);
+void ClearGridSeg(int gridx, int gridy);
+void ChooseHitPlacement();
+char WaitForButtonPress();
 
 int main(void)
 {
-	//setting  Player GameBoards to all 0 (empty)
-	for (int P1GBSetter = 0; P1GBSetter < 10; P1GBSetter++){
-		for (int P1GBSetter2 = 0; P1GBSetter2 < 10; P1GBSetter2++){
-			Player1GameBoard[P1GBSetter][P1GBSetter2] = 0;
-			Player2GameBoard[P1GBSetter][P1GBSetter2] = 0;
-		}
-	}
+    //setting  Player GameBoards to all 0 (empty)
+    for (int P1GBSetter = 0; P1GBSetter < 10; P1GBSetter++)
+    {
+        for (int P1GBSetter2 = 0; P1GBSetter2 < 10; P1GBSetter2++)
+        {
+            Player1GameBoard[P1GBSetter][P1GBSetter2] = 0;
+            Player2GameBoard[P1GBSetter][P1GBSetter2] = 0;
+        }
+    }
     volatile int *pixel_ctrl_ptr = (int *)PIXEL_BUF_CTRL_BASE;
     /* Read location of the pixel buffer from the pixel buffer controller */
     pixel_buffer_start = *pixel_ctrl_ptr;
@@ -230,4 +238,46 @@ void DrawCursor(int gridx, int gridy)
     draw_line(x0, 22 + y0, 22 + x0, 22 + y0, RED); // bot
     draw_line(x0, gridy * 24, x0, 22 + y0, RED);   // left
     draw_line(22 + x0, y0, 22 + x0, 22 + y0, RED); // right
+}
+
+void ChooseHitPlacement()
+{
+    int count = 0;
+    int x_start, y_start;
+    x_start = y_start = 5;
+    while (count < 5)
+    {
+        char key = WaitForButtonPress();
+
+        if (key == '>')
+        {
+            x_start++;
+        }
+        else
+        {
+            x_start--;
+        }
+
+        DrawCursor(x_start, y_start);
+        count++;
+    }
+}
+
+char WaitForButtonPress(){
+    return '<';
+}
+
+void ClearGridSeg(int gridx, int gridy)
+{
+    //gets top left pixel position
+    int x0 = GRID_BASE_X + gridx * DIST_NEXT;
+    int y0 = gridy * DIST_NEXT;
+
+    for (int dx = 0; dx < GRID_WIDTH; dx++)
+    {
+        for (int dy = 0; dy < GRID_WIDTH; dy++)
+        {
+            plot_pixel(x0 + dx, y0 + dy, 0x0);
+        }
+    }
 }
