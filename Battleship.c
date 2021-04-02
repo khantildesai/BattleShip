@@ -43,6 +43,7 @@
 #include <stdbool.h>
 
 volatile int pixel_buffer_start; // global variable
+volatile char *char_buffer_start = (char *)0xC9000000;
 
 //global variables
 //Player GameBoards 0 = not attacked, 1 = attacked and missed, 2 = attacked and hit
@@ -69,7 +70,7 @@ struct Ship
     bool sunk;        //default not sunk
     short int colour; //color number (using macros defined above)
     int type;         // 5 = Aircraft Carrier, 4 = Battleship, 3 = Destroyer/Submarine, 2 = Patrol Boat
-    ShipSegment* Segments;
+    ShipSegment *Segments;
 };
 typedef struct Ship Ship;
 Ship Carrier = {false, BLUE, 5};
@@ -98,74 +99,81 @@ void ChooseHitPlacement();
 char WaitForButtonPress();
 void ClearBoard();
 bool inBounds(int x, int y);
+void DrawWordLine(char *cs, int lineY, int x);
+void clearText();
 
 void drawShipTest();
 
 int main(void)
 {
-    Setup();
-	//drawShipSegment(seg1, BLUE);
     volatile int *pixel_ctrl_ptr = (int *)PIXEL_BUF_CTRL_BASE;
     /* Read location of the pixel buffer from the pixel buffer controller */
     pixel_buffer_start = *pixel_ctrl_ptr;
 
+    Setup();
+    //drawShipSegment(seg1, BLUE);
+
     clear_screen();
+    clearText();
+    DrawWordLine("P1 Turn", 0, 0);
     DrawGrid();
-    //ChooseHitPlacement();
-	//drawShipTest();
+
+    ChooseHitPlacement();
+    drawShipTest();
 }
 
-void drawShipTest(){
-	ShipSegment seg1 = ShipSegmentDefault;
-	ShipSegment seg2 = ShipSegmentDefault;
-	ShipSegment seg3 = ShipSegmentDefault;
-	ShipSegment seg4 = ShipSegmentDefault;
-	ShipSegment seg5 = ShipSegmentDefault;
-	seg1.type = 0;
-	seg1.X = 1;
-	seg1.Y = 7;
-	seg2.type = 0;
-	seg2.X = 1;
-	seg2.Y = 6;
-	seg3.type = 0;
-	seg3.X = 1;
-	seg3.Y = 5;
-	seg4.type = 0;
-	seg4.X = 1;
-	seg4.Y = 4;
-	seg5.type = 0;
-	seg5.X = 1;
-	seg5.Y = 3;
-	
-	ShipSegment seg6 = ShipSegmentDefault;
-	ShipSegment seg7 = ShipSegmentDefault;
-	ShipSegment seg8 = ShipSegmentDefault;
-	ShipSegment seg9 = ShipSegmentDefault;
-	ShipSegment seg0 = ShipSegmentDefault;
-	seg6.type = 0;
-	seg6.X = 2;
-	seg6.Y = 7;
-	seg7.type = 0;
-	seg7.X = 2;
-	seg7.Y = 6;
-	seg8.type = 0;
-	seg8.X = 2;
-	seg8.Y = 5;
-	seg9.type = 0;
-	seg9.X = 2;
-	seg9.Y = 4;
-	seg0.type = 0;
-	seg0.X = 2;
-	seg0.Y = 3;
-	
-	ShipSegment myArr[] = {seg1, seg2, seg3, seg4, seg5};
-	ShipSegment tArr[] = {seg6, seg7, seg8, seg9, seg0};
-	Ship myShip = Carrier;
-	Ship tShip = Carrier;
-	myShip.Segments = myArr;
-	tShip.Segments = tArr;
-	drawShip(myShip);
-	drawShip(tShip);
+void drawShipTest()
+{
+    ShipSegment seg1 = ShipSegmentDefault;
+    ShipSegment seg2 = ShipSegmentDefault;
+    ShipSegment seg3 = ShipSegmentDefault;
+    ShipSegment seg4 = ShipSegmentDefault;
+    ShipSegment seg5 = ShipSegmentDefault;
+    seg1.type = 0;
+    seg1.X = 1;
+    seg1.Y = 7;
+    seg2.type = 0;
+    seg2.X = 1;
+    seg2.Y = 6;
+    seg3.type = 0;
+    seg3.X = 1;
+    seg3.Y = 5;
+    seg4.type = 0;
+    seg4.X = 1;
+    seg4.Y = 4;
+    seg5.type = 0;
+    seg5.X = 1;
+    seg5.Y = 3;
+
+    ShipSegment seg6 = ShipSegmentDefault;
+    ShipSegment seg7 = ShipSegmentDefault;
+    ShipSegment seg8 = ShipSegmentDefault;
+    ShipSegment seg9 = ShipSegmentDefault;
+    ShipSegment seg0 = ShipSegmentDefault;
+    seg6.type = 0;
+    seg6.X = 2;
+    seg6.Y = 7;
+    seg7.type = 0;
+    seg7.X = 2;
+    seg7.Y = 6;
+    seg8.type = 0;
+    seg8.X = 2;
+    seg8.Y = 5;
+    seg9.type = 0;
+    seg9.X = 2;
+    seg9.Y = 4;
+    seg0.type = 0;
+    seg0.X = 2;
+    seg0.Y = 3;
+
+    ShipSegment myArr[] = {seg1, seg2, seg3, seg4, seg5};
+    ShipSegment tArr[] = {seg6, seg7, seg8, seg9, seg0};
+    Ship myShip = Carrier;
+    Ship tShip = Carrier;
+    myShip.Segments = myArr;
+    tShip.Segments = tArr;
+    drawShip(myShip);
+    drawShip(tShip);
 }
 
 void plot_pixel(int x, int y, short int line_color)
@@ -304,7 +312,7 @@ void DrawCursor(int gridx, int gridy)
     draw_line(x0 - 1, gridy * 24, x0 - 1, 22 + y0, RED); // left
     draw_line(23 + x0, y0, 23 + x0, 22 + y0, RED);       // right
 }
-
+//NEED TO CHECK IF POSITION HAS ALREADY BEEN GUESSED!
 void ChooseHitPlacement()
 {
     int count = 0;
@@ -314,31 +322,36 @@ void ChooseHitPlacement()
     while (count < 5)
     {
         char key = WaitForButtonPress();
-        if(key == 'X'){
+        if (key == 'X')
+        {
             break;
         }
         if (key == '>')
         { //Right
             x_start++;
-            if(!inBounds(x_start,y_start)) x_start--;
+            if (!inBounds(x_start, y_start))
+                x_start--;
         }
         else if (key == '<')
         { //LEFT
             x_start--;
-            if(!inBounds(x_start,y_start)) x_start++;
+            if (!inBounds(x_start, y_start))
+                x_start++;
         }
         else if (key == '^')
         { //UP
             y_start--;
-            if(!inBounds(x_start,y_start)) y_start++;
+            if (!inBounds(x_start, y_start))
+                y_start++;
         }
         else if (key == 'v')
         { //DOWN
             y_start++;
-            if(!inBounds(x_start,y_start)) y_start--;
+            if (!inBounds(x_start, y_start))
+                y_start--;
         }
         DrawGrid();
-        
+
         DrawCursor(x_start, y_start);
         //count++;
     }
@@ -360,9 +373,12 @@ char WaitForButtonPress()
     {
         key_val = *(key_ptr + 3);
         sw_val = *(sw_ptr);
-        if((sw_val & 0x1) == 1){
-            upDown = 1; 
-        }else if (upDown){
+        if ((sw_val & 0x1) == 1)
+        {
+            upDown = 1;
+        }
+        else if (upDown)
+        {
             return 'X';
         }
     }
@@ -386,19 +402,24 @@ char WaitForButtonPress()
     return 'L';
 }
 //void draw_line(int x0, int y0, int x1, int y1, short int line_color)
-void drawShipSegment(ShipSegment seg, short int colour){
-	if (!inBounds(seg.X, seg.Y)) return;
-	int x0 = GRID_BASE_X + seg.X * DIST_NEXT;
-	int y0 = GRID_BASE_Y + seg.Y * DIST_NEXT;
-	for (int iterX = 0; iterX < (GRID_WIDTH); iterX++){
-		draw_line(x0 + iterX, y0, x0 + iterX, y0 + GRID_WIDTH - 1, colour);
-	}
+void drawShipSegment(ShipSegment seg, short int colour)
+{
+    if (!inBounds(seg.X, seg.Y))
+        return;
+    int x0 = GRID_BASE_X + seg.X * DIST_NEXT;
+    int y0 = GRID_BASE_Y + seg.Y * DIST_NEXT;
+    for (int iterX = 0; iterX < (GRID_WIDTH); iterX++)
+    {
+        draw_line(x0 + iterX, y0, x0 + iterX, y0 + GRID_WIDTH - 1, colour);
+    }
 }
 
-void drawShip(Ship ship){
-	for (int segIter = 0; segIter < ship.type; segIter++){
-		drawShipSegment(ship.Segments[segIter], ship.colour);
-	}
+void drawShip(Ship ship)
+{
+    for (int segIter = 0; segIter < ship.type; segIter++)
+    {
+        drawShipSegment(ship.Segments[segIter], ship.colour);
+    }
 }
 
 void ClearGridSeg(int gridx, int gridy)
@@ -436,5 +457,27 @@ bool inBounds(int x, int y)
     else
     {
         return 0;
+    }
+}
+
+void DrawWordLine(char *cs, int lineY, int x)
+{
+
+    int offset = (lineY << 7) + x;
+    while (*(cs))
+    {
+        *(char_buffer_start + offset) = *(cs); // write to the character buffer
+        cs++;
+        offset++;
+    }
+}
+
+void clearText()
+{
+    int offset = 0;
+    for (int pixelNum = 0; pixelNum < 4800; pixelNum++)
+    {
+        *(char_buffer_start + offset) = 0; // Clear spot
+        offset++;
     }
 }
