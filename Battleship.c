@@ -68,15 +68,15 @@ struct Ship
 {
     bool sunk;        //default not sunk
     short int colour; //color number (using macros defined above)
-    int type;         // 0 = Aircraft Carrier, 1 = Battleship, 2 = Destroyer, 3 = Submarine, 4 = Patrol Boat
-    ShipSegment Segments[];
+    int type;         // 5 = Aircraft Carrier, 4 = Battleship, 3 = Destroyer/Submarine, 2 = Patrol Boat
+    ShipSegment* Segments;
 };
 typedef struct Ship Ship;
-Ship Carrier = {false, BLUE, 0};
-Ship Battleship = {false, GREEN, 1};
-Ship Destroyer = {false, CYAN, 2};
+Ship Carrier = {false, BLUE, 5};
+Ship Battleship = {false, GREEN, 4};
+Ship Destroyer = {false, CYAN, 3};
 Ship Submarine = {false, MAGENTA, 3};
-Ship PatrolBoat = {false, GREY, 4};
+Ship PatrolBoat = {false, GREY, 2};
 
 //Player struct
 struct Player
@@ -92,11 +92,14 @@ void draw_line(int x0, int y0, int x1, int y1, short int line_color);
 void DrawGrid();
 void DrawCursor(int gridx, int gridy);
 void drawShipSegment(ShipSegment seg, short int colour);
+void drawShip(Ship ship);
 void ClearGridSeg(int gridx, int gridy);
 void ChooseHitPlacement();
 char WaitForButtonPress();
 void ClearBoard();
 bool inBounds(int x, int y);
+
+void drawShipTest();
 
 int main(void)
 {
@@ -109,11 +112,60 @@ int main(void)
     clear_screen();
     DrawGrid();
     //ChooseHitPlacement();
+	//drawShipTest();
+}
+
+void drawShipTest(){
 	ShipSegment seg1 = ShipSegmentDefault;
+	ShipSegment seg2 = ShipSegmentDefault;
+	ShipSegment seg3 = ShipSegmentDefault;
+	ShipSegment seg4 = ShipSegmentDefault;
+	ShipSegment seg5 = ShipSegmentDefault;
 	seg1.type = 0;
 	seg1.X = 1;
 	seg1.Y = 7;
-	drawShipSegment(seg1, BLUE);
+	seg2.type = 0;
+	seg2.X = 1;
+	seg2.Y = 6;
+	seg3.type = 0;
+	seg3.X = 1;
+	seg3.Y = 5;
+	seg4.type = 0;
+	seg4.X = 1;
+	seg4.Y = 4;
+	seg5.type = 0;
+	seg5.X = 1;
+	seg5.Y = 3;
+	
+	ShipSegment seg6 = ShipSegmentDefault;
+	ShipSegment seg7 = ShipSegmentDefault;
+	ShipSegment seg8 = ShipSegmentDefault;
+	ShipSegment seg9 = ShipSegmentDefault;
+	ShipSegment seg0 = ShipSegmentDefault;
+	seg6.type = 0;
+	seg6.X = 2;
+	seg6.Y = 7;
+	seg7.type = 0;
+	seg7.X = 2;
+	seg7.Y = 6;
+	seg8.type = 0;
+	seg8.X = 2;
+	seg8.Y = 5;
+	seg9.type = 0;
+	seg9.X = 2;
+	seg9.Y = 4;
+	seg0.type = 0;
+	seg0.X = 2;
+	seg0.Y = 3;
+	
+	ShipSegment myArr[] = {seg1, seg2, seg3, seg4, seg5};
+	ShipSegment tArr[] = {seg6, seg7, seg8, seg9, seg0};
+	Ship myShip = Carrier;
+	Ship tShip = Carrier;
+	myShip.Segments = myArr;
+	tShip.Segments = tArr;
+	drawShip(myShip);
+	drawShip(tShip);
 }
 
 void plot_pixel(int x, int y, short int line_color)
@@ -327,6 +379,12 @@ void drawShipSegment(ShipSegment seg, short int colour){
 	int y0 = GRID_BASE_Y + seg.Y * DIST_NEXT;
 	for (int iterX = 0; iterX < (GRID_WIDTH); iterX++){
 		draw_line(x0 + iterX, y0, x0 + iterX, y0 + GRID_WIDTH - 1, colour);
+	}
+}
+
+void drawShip(Ship ship){
+	for (int segIter = 0; segIter < ship.type; segIter++){
+		drawShipSegment(ship.Segments[segIter], ship.colour);
 	}
 }
 
