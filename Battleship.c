@@ -36,7 +36,7 @@
 #define GRID_WIDTH 23
 #define DIST_NEXT 24 //Add to postion to get same spot in next square
 #define GRID_BASE_X 41
-#define GRIDE_BASE_Y 0
+#define GRID_BASE_Y 0
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -91,7 +91,7 @@ void clear_screen();
 void draw_line(int x0, int y0, int x1, int y1, short int line_color);
 void DrawGrid();
 void DrawCursor(int gridx, int gridy);
-void drawShipSegment(ShipSegment seg);
+void drawShipSegment(ShipSegment seg, short int colour);
 void ClearGridSeg(int gridx, int gridy);
 void ChooseHitPlacement();
 char WaitForButtonPress();
@@ -100,12 +100,18 @@ void ClearBoard();
 int main(void)
 {
     Setup();
+	//drawShipSegment(seg1, BLUE);
     volatile int *pixel_ctrl_ptr = (int *)PIXEL_BUF_CTRL_BASE;
     /* Read location of the pixel buffer from the pixel buffer controller */
     pixel_buffer_start = *pixel_ctrl_ptr;
 
     clear_screen();
     DrawGrid();
+	ShipSegment seg1 = ShipSegmentDefault;
+	seg1.type = 0;
+	seg1.X = 1;
+	seg1.Y = 7;
+	drawShipSegment(seg1, BLUE);
 }
 
 void plot_pixel(int x, int y, short int line_color)
@@ -268,6 +274,14 @@ char WaitForButtonPress()
 {
     return '<';
 }
+//void draw_line(int x0, int y0, int x1, int y1, short int line_color)
+void drawShipSegment(ShipSegment seg, short int colour){
+	int x0 = GRID_BASE_X + seg.X * DIST_NEXT;
+	int y0 = GRID_BASE_Y + seg.Y * DIST_NEXT;
+	for (int iterX = 0; iterX < (GRID_WIDTH); iterX++){
+		draw_line(x0 + iterX, y0, x0 + iterX, y0 + GRID_WIDTH - 1, colour);
+	}
+}
 
 void ClearGridSeg(int gridx, int gridy)
 {
@@ -286,7 +300,7 @@ void ClearGridSeg(int gridx, int gridy)
 
 void ClearBoard()
 {
-    for (int GridX = 0; Gridx < 10; Gridx++)
+    for (int GridX = 0; GridX < 10; GridX++)
     {
         for (int GridY = 0; GridY < 10; GridY++)
         {
