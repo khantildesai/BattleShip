@@ -108,7 +108,7 @@ int main(void)
 
     clear_screen();
     DrawGrid();
-    ChooseHitPlacement();
+    //ChooseHitPlacement();
 	ShipSegment seg1 = ShipSegmentDefault;
 	seg1.type = 0;
 	seg1.X = 1;
@@ -266,18 +266,22 @@ void ChooseHitPlacement()
         if (key == '>')
         { //Right
             x_start++;
+            if(!inBounds(x_start,y_start)) x_start--;
         }
         else if (key == '<')
         { //LEFT
             x_start--;
+            if(!inBounds(x_start,y_start)) x_start++;
         }
         else if (key == '^')
         { //UP
             y_start--;
+            if(!inBounds(x_start,y_start)) y_start++;
         }
         else if (key == 'v')
         { //DOWN
             y_start++;
+            if(!inBounds(x_start,y_start)) y_start--;
         }
         DrawGrid();
         
