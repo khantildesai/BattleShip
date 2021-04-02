@@ -95,6 +95,7 @@ void drawShipSegment(ShipSegment seg);
 void ClearGridSeg(int gridx, int gridy);
 void ChooseHitPlacement();
 char WaitForButtonPress();
+void ClearBoard();
 
 int main(void)
 {
@@ -263,7 +264,8 @@ void ChooseHitPlacement()
     }
 }
 
-char WaitForButtonPress(){
+char WaitForButtonPress()
+{
     return '<';
 }
 
@@ -278,6 +280,17 @@ void ClearGridSeg(int gridx, int gridy)
         for (int dy = 0; dy < GRID_WIDTH; dy++)
         {
             plot_pixel(x0 + dx, y0 + dy, 0x0);
+        }
+    }
+}
+
+void ClearBoard()
+{
+    for (int GridX = 0; Gridx < 10; Gridx++)
+    {
+        for (int GridY = 0; GridY < 10; GridY++)
+        {
+            ClearGridSeg(GridX, GridY);
         }
     }
 }
