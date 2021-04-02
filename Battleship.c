@@ -96,6 +96,7 @@ void ClearGridSeg(int gridx, int gridy);
 void ChooseHitPlacement();
 char WaitForButtonPress();
 void ClearBoard();
+bool inBounds(int x, int y);
 
 int main(void)
 {
@@ -106,6 +107,7 @@ int main(void)
 
     clear_screen();
     DrawGrid();
+    ChooseHitPlacement();
 }
 
 void plot_pixel(int x, int y, short int line_color)
@@ -200,8 +202,9 @@ void swap(int *a, int *b)
     return;
 }
 
-void Setup(){
-	//setting  Player GameBoards to all 0 (empty)
+void Setup()
+{
+    //setting  Player GameBoards to all 0 (empty)
     for (int P1GBSetter = 0; P1GBSetter < 10; P1GBSetter++)
     {
         for (int P1GBSetter2 = 0; P1GBSetter2 < 10; P1GBSetter2++)
@@ -235,10 +238,13 @@ void DrawCursor(int gridx, int gridy)
     int y0 = gridy * DIST_NEXT;
 
     //Draws the 4 line segments
-    draw_line(x0, y0, 63 + gridx * 24, y0, RED);   // top
-    draw_line(x0, 22 + y0, 22 + x0, 22 + y0, RED); // bot
-    draw_line(x0, gridy * 24, x0, 22 + y0, RED);   // left
-    draw_line(22 + x0, y0, 22 + x0, 22 + y0, RED); // right
+    if (y0 > 0)
+    {
+        draw_line(x0, y0 - 1, 63 + gridx * 24, y0 - 1, RED); // top
+    }
+    draw_line(x0, 23 + y0, 22 + x0, 23 + y0, RED);       // bot
+    draw_line(x0 - 1, gridy * 24, x0 - 1, 22 + y0, RED); // left
+    draw_line(23 + x0, y0, 23 + x0, 22 + y0, RED);       // right
 }
 
 void ChooseHitPlacement()
@@ -246,27 +252,63 @@ void ChooseHitPlacement()
     int count = 0;
     int x_start, y_start;
     x_start = y_start = 5;
+    DrawCursor(x_start, y_start);
     while (count < 5)
     {
         char key = WaitForButtonPress();
 
         if (key == '>')
-        {
+        { //Right
             x_start++;
         }
-        else
-        {
+        else if (key == '<')
+        { //LEFT
             x_start--;
         }
-
+        else if (key == '^')
+        { //UP
+            y_start--;
+        }
+        else if (key == 'v')
+        { //DOWN
+            y_start++;
+        }
+        DrawGrid();
+        
         DrawCursor(x_start, y_start);
-        count++;
+        //count++;
     }
 }
 
 char WaitForButtonPress()
 {
-    return '<';
+    volatile int *key_ptr = (int *)KEY_BASE;
+    *(key_ptr + 2) = 0xF;
+    *(key_ptr + 3) = 0xF;
+
+    int key_val = *(key_ptr + 3);
+
+    while (key_val == 0)
+    {
+        key_val = *(key_ptr + 3);
+    }
+
+    if (key_val == 1) //KEY0
+    {                 //DOWN
+        return 'v';
+    }
+    else if (key_val == 2) //KEY1
+    {                      //UP
+        return '^';
+    }
+    else if (key_val == 4) //KEY2
+    {                      //RIGHT
+        return '>';
+    }
+    else if (key_val == 8) //KEY3
+    {                      //LEFT
+        return '<';
+    }
 }
 
 void ClearGridSeg(int gridx, int gridy)
@@ -286,11 +328,23 @@ void ClearGridSeg(int gridx, int gridy)
 
 void ClearBoard()
 {
-    for (int GridX = 0; Gridx < 10; Gridx++)
+    for (int GridX = 0; GridX < 10; GridX++)
     {
         for (int GridY = 0; GridY < 10; GridY++)
         {
             ClearGridSeg(GridX, GridY);
         }
+    }
+}
+
+bool inBounds(int x, int y)
+{
+    if ((x >= 0 && x < 10) && (y >= 0 && y < 10))
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
     }
 }
