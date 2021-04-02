@@ -35,7 +35,7 @@
 /*Game constants*/
 #define GRID_WIDTH 23
 #define DIST_NEXT 24 //Add to postion to get same spot in next square
-#define GRID_BASE_X 41
+#define GRID_BASE_X 81
 #define GRID_BASE_Y 0
 
 #include <stdlib.h>
@@ -287,12 +287,12 @@ void DrawGrid()
     //Draws Rows
     for (int row = 0; row < 10; row++)
     {
-        draw_line(40, 23 + 24 * row, 280, 23 + 24 * row, GREY);
+        draw_line(GRID_BASE_X - 1, 23 + 24 * row, RESOLUTION_X - 1, 23 + 24 * row, GREY);
     }
     //Draws columns
-    for (int col = 0; col < 11; col++)
+    for (int col = 0; col < 12; col++)
     {
-        draw_line(40 + 24 * col, 0, 40 + 24 * col, RESOLUTION_Y - 1, GREY);
+        draw_line(GRID_BASE_X - 2 + 24 * col, 0, GRID_BASE_X - 2 + 24 * col, RESOLUTION_Y - 1, GREY);
     }
 }
 
@@ -306,11 +306,11 @@ void DrawCursor(int gridx, int gridy)
     //Draws the 4 line segments
     if (y0 > 0)
     {
-        draw_line(x0, y0 - 1, 63 + gridx * 24, y0 - 1, RED); // top
+        draw_line(x0 - 2, y0 - 1, 22 + x0, y0 - 1, RED); // top
     }
-    draw_line(x0, 23 + y0, 22 + x0, 23 + y0, RED);       // bot
-    draw_line(x0 - 1, gridy * 24, x0 - 1, 22 + y0, RED); // left
-    draw_line(23 + x0, y0, 23 + x0, 22 + y0, RED);       // right
+    draw_line(x0 - 2, 23 + y0, 22 + x0, 23 + y0, RED);   // bot
+    draw_line(x0 - 2, y0, x0 - 2, GRID_WIDTH + y0, RED); // left
+    draw_line(22 + x0, y0, 22 + x0, 22 + y0, RED);       // right
 }
 //NEED TO CHECK IF POSITION HAS ALREADY BEEN GUESSED!
 void ChooseHitPlacement()
