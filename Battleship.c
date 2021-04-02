@@ -318,6 +318,7 @@ char WaitForButtonPress()
 }
 //void draw_line(int x0, int y0, int x1, int y1, short int line_color)
 void drawShipSegment(ShipSegment seg, short int colour){
+	if (!inBounds(seg.X, seg.Y)) return;
 	int x0 = GRID_BASE_X + seg.X * DIST_NEXT;
 	int y0 = GRID_BASE_Y + seg.Y * DIST_NEXT;
 	for (int iterX = 0; iterX < (GRID_WIDTH); iterX++){
