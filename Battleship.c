@@ -98,15 +98,7 @@ char WaitForButtonPress();
 
 int main(void)
 {
-    //setting  Player GameBoards to all 0 (empty)
-    for (int P1GBSetter = 0; P1GBSetter < 10; P1GBSetter++)
-    {
-        for (int P1GBSetter2 = 0; P1GBSetter2 < 10; P1GBSetter2++)
-        {
-            Player1GameBoard[P1GBSetter][P1GBSetter2] = 0;
-            Player2GameBoard[P1GBSetter][P1GBSetter2] = 0;
-        }
-    }
+    Setup();
     volatile int *pixel_ctrl_ptr = (int *)PIXEL_BUF_CTRL_BASE;
     /* Read location of the pixel buffer from the pixel buffer controller */
     pixel_buffer_start = *pixel_ctrl_ptr;
@@ -207,8 +199,16 @@ void swap(int *a, int *b)
     return;
 }
 
-void Setup()
-{
+void Setup(){
+	//setting  Player GameBoards to all 0 (empty)
+    for (int P1GBSetter = 0; P1GBSetter < 10; P1GBSetter++)
+    {
+        for (int P1GBSetter2 = 0; P1GBSetter2 < 10; P1GBSetter2++)
+        {
+            Player1GameBoard[P1GBSetter][P1GBSetter2] = 0;
+            Player2GameBoard[P1GBSetter][P1GBSetter2] = 0;
+        }
+    }
 }
 
 //Draws game grid
