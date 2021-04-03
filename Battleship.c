@@ -94,6 +94,8 @@ void DrawGrid();
 void DrawCursor(int gridx, int gridy);
 void drawShipSegment(ShipSegment seg, short int colour);
 void drawShip(Ship ship);
+void drawHit(int X, int Y);
+void drawMiss(int X, int Y);
 void ClearGridSeg(int gridx, int gridy);
 void ChooseHitPlacement();
 char WaitForButtonPress();
@@ -111,15 +113,16 @@ int main(void)
     pixel_buffer_start = *pixel_ctrl_ptr;
 
     Setup();
-    //drawShipSegment(seg1, BLUE);
 
     clear_screen();
     clearText();
     DrawWordLine("P1 Turn", 0, 0);
     DrawGrid();
 
-    ChooseHitPlacement();
     drawShipTest();
+	//ChooseHitPlacement();
+	drawHit(1,7);
+	drawMiss(0,7);
 }
 
 void drawShipTest()
@@ -402,24 +405,47 @@ char WaitForButtonPress()
     return 'L';
 }
 //void draw_line(int x0, int y0, int x1, int y1, short int line_color)
-void drawShipSegment(ShipSegment seg, short int colour)
-{
+void drawShipSegment(ShipSegment seg, short int colour){
     if (!inBounds(seg.X, seg.Y))
         return;
     int x0 = GRID_BASE_X + seg.X * DIST_NEXT;
     int y0 = GRID_BASE_Y + seg.Y * DIST_NEXT;
     for (int iterX = 0; iterX < (GRID_WIDTH); iterX++)
     {
-        draw_line(x0 + iterX, y0, x0 + iterX, y0 + GRID_WIDTH - 1, colour);
+        draw_line(x0 + iterX - 1, y0, x0 + iterX - 1, y0 + GRID_WIDTH - 1, colour);
     }
 }
 
-void drawShip(Ship ship)
-{
+void drawShip(Ship ship){
     for (int segIter = 0; segIter < ship.type; segIter++)
     {
         drawShipSegment(ship.Segments[segIter], ship.colour);
     }
+}
+
+void drawHit(int X, int Y){
+	//draw first diagonal of cross
+	if (!inBounds(X, Y))
+        return;
+    int x0 = GRID_BASE_X + X * DIST_NEXT;
+    int y0 = GRID_BASE_Y + Y * DIST_NEXT;
+	for (int iter = 0; iter < 5; iter++){
+		draw_line(x0 + iter-1, y0, x0+GRID_WIDTH-5 + iter-1, y0+GRID_WIDTH-1, RED);
+		draw_line(x0 + iter-1, y0+GRID_WIDTH-1, x0+GRID_WIDTH-5 + iter-1, y0, RED);
+	}
+}
+
+void drawMiss(int X, int Y){
+	if (!inBounds(X, Y))
+        return;
+	int x0 = GRID_BASE_X + X * DIST_NEXT;
+    int y0 = GRID_BASE_Y + Y * DIST_NEXT;
+	draw_line(x0+8,y0+9,x0+8,y0+11,GREEN);
+	draw_line(x0+9,y0+8,x0+9,y0+12,GREEN);
+	draw_line(x0+10,y0+7,x0+10,y0+13,GREEN);
+	draw_line(x0+11,y0+7,x0+11,y0+13,GREEN);
+	draw_line(x0+12,y0+8,x0+12,y0+12,GREEN);
+	draw_line(x0+13,y0+9,x0+13,y0+11,GREEN);
 }
 
 void ClearGridSeg(int gridx, int gridy)
