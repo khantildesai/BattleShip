@@ -86,6 +86,17 @@ struct Player
     Ship Ships[];
 };
 
+Ship Player1Ships[5];
+Ship Player2Ships[5];
+
+//Coordinate Struct
+struct Coord
+{
+    int x; //X Coordinate
+    int y; //Y Coordinate
+};
+typedef struct Coord Coord;
+
 void Setup();
 void swap(int *, int *);
 void clear_screen();
@@ -97,12 +108,14 @@ void drawShip(Ship ship);
 void drawHit(int X, int Y);
 void drawMiss(int X, int Y);
 void ClearGridSeg(int gridx, int gridy);
-void ChooseHitPlacement();
+Coord ChooseHitPlacement(int x_start, int y_start);
 char WaitForButtonPress();
 void ClearBoard();
 bool inBounds(int x, int y);
 void DrawWordLine(char *cs, int lineY, int x);
 void clearText();
+void takeTurn();
+int hitType(int x, int y, int player);//PLayer is the player getting shot at
 
 void drawShipTest();
 
@@ -120,9 +133,9 @@ int main(void)
     DrawGrid();
 
     drawShipTest();
-	//ChooseHitPlacement();
-	drawHit(1,7);
-	drawMiss(0,7);
+    //ChooseHitPlacement();
+    drawHit(1, 7);
+    drawMiss(0, 7);
 }
 
 void drawShipTest()
@@ -316,11 +329,9 @@ void DrawCursor(int gridx, int gridy)
     draw_line(22 + x0, y0, 22 + x0, 22 + y0, RED);       // right
 }
 //NEED TO CHECK IF POSITION HAS ALREADY BEEN GUESSED!
-void ChooseHitPlacement()
+Coord ChooseHitPlacement(int x_start, int y_start)
 {
     int count = 0;
-    int x_start, y_start;
-    x_start = y_start = 5;
     DrawCursor(x_start, y_start);
     while (count < 5)
     {
@@ -359,6 +370,8 @@ void ChooseHitPlacement()
         //count++;
     }
     printf("SHOTS FIYAED AT (%d, %d)", x_start, y_start);
+    Coord placement = {x_start, y_start};
+    return placement;
 }
 
 char WaitForButtonPress()
@@ -405,7 +418,8 @@ char WaitForButtonPress()
     return 'L';
 }
 //void draw_line(int x0, int y0, int x1, int y1, short int line_color)
-void drawShipSegment(ShipSegment seg, short int colour){
+void drawShipSegment(ShipSegment seg, short int colour)
+{
     if (!inBounds(seg.X, seg.Y))
         return;
     int x0 = GRID_BASE_X + seg.X * DIST_NEXT;
@@ -416,36 +430,40 @@ void drawShipSegment(ShipSegment seg, short int colour){
     }
 }
 
-void drawShip(Ship ship){
+void drawShip(Ship ship)
+{
     for (int segIter = 0; segIter < ship.type; segIter++)
     {
         drawShipSegment(ship.Segments[segIter], ship.colour);
     }
 }
 
-void drawHit(int X, int Y){
-	//draw first diagonal of cross
-	if (!inBounds(X, Y))
+void drawHit(int X, int Y)
+{
+    //draw first diagonal of cross
+    if (!inBounds(X, Y))
         return;
     int x0 = GRID_BASE_X + X * DIST_NEXT;
     int y0 = GRID_BASE_Y + Y * DIST_NEXT;
-	for (int iter = 0; iter < 5; iter++){
-		draw_line(x0 + iter-1, y0, x0+GRID_WIDTH-5 + iter-1, y0+GRID_WIDTH-1, RED);
-		draw_line(x0 + iter-1, y0+GRID_WIDTH-1, x0+GRID_WIDTH-5 + iter-1, y0, RED);
-	}
+    for (int iter = 0; iter < 5; iter++)
+    {
+        draw_line(x0 + iter - 1, y0, x0 + GRID_WIDTH - 5 + iter - 1, y0 + GRID_WIDTH - 1, RED);
+        draw_line(x0 + iter - 1, y0 + GRID_WIDTH - 1, x0 + GRID_WIDTH - 5 + iter - 1, y0, RED);
+    }
 }
 
-void drawMiss(int X, int Y){
-	if (!inBounds(X, Y))
+void drawMiss(int X, int Y)
+{
+    if (!inBounds(X, Y))
         return;
-	int x0 = GRID_BASE_X + X * DIST_NEXT;
+    int x0 = GRID_BASE_X + X * DIST_NEXT;
     int y0 = GRID_BASE_Y + Y * DIST_NEXT;
-	draw_line(x0+8,y0+9,x0+8,y0+11,GREEN);
-	draw_line(x0+9,y0+8,x0+9,y0+12,GREEN);
-	draw_line(x0+10,y0+7,x0+10,y0+13,GREEN);
-	draw_line(x0+11,y0+7,x0+11,y0+13,GREEN);
-	draw_line(x0+12,y0+8,x0+12,y0+12,GREEN);
-	draw_line(x0+13,y0+9,x0+13,y0+11,GREEN);
+    draw_line(x0 + 8, y0 + 9, x0 + 8, y0 + 11, GREEN);
+    draw_line(x0 + 9, y0 + 8, x0 + 9, y0 + 12, GREEN);
+    draw_line(x0 + 10, y0 + 7, x0 + 10, y0 + 13, GREEN);
+    draw_line(x0 + 11, y0 + 7, x0 + 11, y0 + 13, GREEN);
+    draw_line(x0 + 12, y0 + 8, x0 + 12, y0 + 12, GREEN);
+    draw_line(x0 + 13, y0 + 9, x0 + 13, y0 + 11, GREEN);
 }
 
 void ClearGridSeg(int gridx, int gridy)
@@ -506,4 +524,23 @@ void clearText()
         *(char_buffer_start + offset) = 0; // Clear spot
         offset++;
     }
+}
+
+void takeTurn()
+{
+    Coord shot;
+    shot = ChooseHitPlacement(5,5);
+    while (Player1GameBoard[shot.x][shot.y] == 0)
+    {
+        //Check if position has already been guessed
+        shot = ChooseHitPlacement(shot.x,shot.y);
+    }
+
+    //Update Player's gameboard
+    Player1GameBoard[shot.x][shot.y] == hitType(shot.x, shot.y, 1);
+}
+
+int hitType(int x, int y, int player){
+    Ship * targetShips = (player == 1) ?  Player1Ships : Player2Ships;
+    return 1;
 }
