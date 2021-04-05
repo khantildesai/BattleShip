@@ -141,7 +141,6 @@ int main(void)
 
     clear_screen();
     clearText();
-    DrawWordLine("P1 Turn", 0, 0);
     DrawGrid();
 
     drawShipTest();
@@ -486,7 +485,7 @@ void ClearGridSeg(int gridx, int gridy)
     {
         for (int dy = 0; dy < GRID_WIDTH; dy++)
         {
-            plot_pixel(x0 + dx, y0 + dy, 0x0);
+            plot_pixel(x0 - 1 + dx, y0 + dy, 0x0);
         }
     }
 }
@@ -548,6 +547,15 @@ void takeTurn(int player)
             shot = ChooseHitPlacement(shot.x, shot.y);
         }
         Player1GameBoard[shot.x][shot.y] = hitType(shot.x, shot.y, 2);
+
+        if (Player1GameBoard[shot.x][shot.y] == 1)
+        {
+            DrawWordLine("Miss", 5, 0);
+        }
+        else
+        {
+            DrawWordLine("HIT!", 5, 0);
+        }
     }
     else
     {
@@ -557,6 +565,14 @@ void takeTurn(int player)
             shot = ChooseHitPlacement(shot.x, shot.y);
         }
         Player2GameBoard[shot.x][shot.y] = hitType(shot.x, shot.y, 2);
+        if (Player2GameBoard[shot.x][shot.y] == 1)
+        {
+            DrawWordLine("Miss", 5, 0);
+        }
+        else
+        {
+            DrawWordLine("HIT!", 5, 0);
+        }
     }
 
     DrawGrid();
@@ -607,20 +623,24 @@ void updateSunkFlag(Ship *s)
 }
 
 int playGame()
-{//NEED TO CHECK WIN CONDITION
+{ //NEED TO CHECK WIN CONDITION
     bool gameOver = 0;
     while (!gameOver)
     {
+        clearText();
+        ClearBoard();
+
         //Draw grid for Player 1
+        DrawWordLine("P1 Turn", 0, 0);
         drawPreview(2);
         drawHits_Miss(2);
-
         //PLayer 1 guesses
         takeTurn(2); //PLayer 1s turn
 
         ClearBoard();
         clearText();
         //Draw grid for Player 2
+        DrawWordLine("P2 Turn", 0, 0);
         drawPreview(1);
         drawHits_Miss(1);
         //Draw grid for Player 2
@@ -697,11 +717,11 @@ void drawHits_Miss(int player)
             }
             else
             {
-                if (Player1GameBoard[x][y] == 1)
+                if (Player2GameBoard[x][y] == 1)
                 {
                     drawMiss(x, y);
                 }
-                else if (Player1GameBoard[x][y] == 2)
+                else if (Player2GameBoard[x][y] == 2)
                 {
                     drawHit(x, y);
                 }
