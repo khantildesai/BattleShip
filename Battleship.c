@@ -119,13 +119,14 @@ void ClearBoard();
 bool inBounds(int x, int y);
 void DrawWordLine(char *cs, int lineY, int x);
 void clearText();
-void takeTurn();
+void takeTurn(int player);
 int hitType(int x, int y, int player); //PLayer is the player getting shot at
 void updateSunkFlag(Ship *s);
 void drawShipTest();
 ShipSegment *SegmentHit(int x, int y, int player);
 int playGame();
 void drawShipPreview(int player);
+void drawHits_Miss(int player);
 void drawRectangle(int x0, int y0, int x1, int y1, short int colour);
 void drawPreviewHit(int shipNum, int segNum);
 void drawPreview(int player);
@@ -144,9 +145,7 @@ int main(void)
     DrawGrid();
 
     drawShipTest();
-    drawPreview(1);
-    drawHit(1, 7);
-    drawMiss(0, 7);
+    playGame();
 }
 
 void drawShipTest()
@@ -339,7 +338,7 @@ void DrawCursor(int gridx, int gridy)
     draw_line(x0 - 2, y0, x0 - 2, GRID_WIDTH + y0, RED); // left
     draw_line(22 + x0, y0, 22 + x0, 22 + y0, RED);       // right
 }
-//NEED TO CHECK IF POSITION HAS ALREADY BEEN GUESSED!
+
 Coord ChooseHitPlacement(int x_start, int y_start)
 {
     int count = 0;
@@ -537,18 +536,29 @@ void clearText()
     }
 }
 
-void takeTurn()
+void takeTurn(int player)
 {
     Coord shot;
     shot = ChooseHitPlacement(5, 5);
-    while (Player1GameBoard[shot.x][shot.y] != 0)
+    if (player == 1)
     {
-        //Check if position has already been guessed
-        shot = ChooseHitPlacement(shot.x, shot.y);
+        while (Player1GameBoard[shot.x][shot.y] != 0)
+        {
+            //Check if position has already been guessed
+            shot = ChooseHitPlacement(shot.x, shot.y);
+        }
+        Player1GameBoard[shot.x][shot.y] = hitType(shot.x, shot.y, 2);
+    }
+    else
+    {
+        while (Player2GameBoard[shot.x][shot.y] != 0)
+        {
+            //Check if position has already been guessed
+            shot = ChooseHitPlacement(shot.x, shot.y);
+        }
+        Player2GameBoard[shot.x][shot.y] = hitType(shot.x, shot.y, 2);
     }
 
-    //Update Player's gameboard
-    Player1GameBoard[shot.x][shot.y] = hitType(shot.x, shot.y, 2);
     DrawGrid();
 }
 
@@ -597,12 +607,24 @@ void updateSunkFlag(Ship *s)
 }
 
 int playGame()
-{
-    while (1)
+{//NEED TO CHECK WIN CONDITION
+    bool gameOver = 0;
+    while (!gameOver)
     {
-        takeTurn(1);
+        //Draw grid for Player 1
+        drawPreview(2);
+        drawHits_Miss(2);
 
-        takeTurn(2);
+        //PLayer 1 guesses
+        takeTurn(2); //PLayer 1s turn
+
+        ClearBoard();
+        clearText();
+        //Draw grid for Player 2
+        drawPreview(1);
+        drawHits_Miss(1);
+        //Draw grid for Player 2
+        takeTurn(1); //P2 turn
     }
     return 0;
 }
@@ -639,7 +661,7 @@ void drawPreviewHit(int shipNum, int segNum)
 
 void drawPreview(int player)
 {
-    DrawWordLine("--- Ship Status --- ", 14,0);
+    DrawWordLine("--- Ship Status --- ", 14, 0);
     drawShipPreview(player);
 
     for (int shipNum = 0; shipNum < 5; shipNum++)
@@ -651,6 +673,38 @@ void drawPreview(int player)
             if (s.Segments[i].hit == 1)
             {
                 drawPreviewHit(shipNum, i);
+            }
+        }
+    }
+}
+
+void drawHits_Miss(int player)
+{
+    for (int x = 0; x < 10; x++)
+    {
+        for (int y = 0; y < 10; y++)
+        {
+            if (player == 1)
+            {
+                if (Player1GameBoard[x][y] == 1)
+                {
+                    drawMiss(x, y);
+                }
+                else if (Player1GameBoard[x][y] == 2)
+                {
+                    drawHit(x, y);
+                }
+            }
+            else
+            {
+                if (Player1GameBoard[x][y] == 1)
+                {
+                    drawMiss(x, y);
+                }
+                else if (Player1GameBoard[x][y] == 2)
+                {
+                    drawHit(x, y);
+                }
             }
         }
     }
