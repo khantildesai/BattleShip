@@ -38,6 +38,8 @@
 #define GRID_BASE_X 81
 #define GRID_BASE_Y 0
 
+#define previewWidth 20
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -97,6 +99,9 @@ struct Coord
 };
 typedef struct Coord Coord;
 
+//Top left pixel        5           4                       3                           3           2
+Coord previewCoords[] = {{15 + 2 * previewWidth, 70}, {10 + previewWidth, 70}, {5, 70}, {10 + previewWidth, 70 + 5 * previewWidth}, {5, 70 + 4 * previewWidth}};
+
 void Setup();
 void swap(int *, int *);
 void clear_screen();
@@ -119,6 +124,11 @@ int hitType(int x, int y, int player); //PLayer is the player getting shot at
 void updateSunkFlag(Ship *s);
 void drawShipTest();
 ShipSegment *SegmentHit(int x, int y, int player);
+int playGame();
+void drawShipPreview(int player);
+void drawRectangle(int x0, int y0, int x1, int y1, short int colour);
+void drawPreviewHit(int shipNum, int segNum);
+void drawPreview(int player);
 
 int main(void)
 {
@@ -134,7 +144,7 @@ int main(void)
     DrawGrid();
 
     drawShipTest();
-    //ChooseHitPlacement();
+    drawPreview(1);
     drawHit(1, 7);
     drawMiss(0, 7);
 }
@@ -584,4 +594,64 @@ void updateSunkFlag(Ship *s)
     }
 
     s->sunk = 1;
+}
+
+int playGame()
+{
+    while (1)
+    {
+        takeTurn(1);
+
+        takeTurn(2);
+    }
+    return 0;
+}
+
+void drawShipPreview(int player)
+{
+    int numSegs = 5;
+    drawRectangle(previewCoords[0].x, previewCoords[0].y, previewCoords[0].x + previewWidth, previewCoords[0].y + numSegs * previewWidth, BLUE);
+    numSegs = 4;
+    drawRectangle(previewCoords[1].x, previewCoords[1].y, previewCoords[1].x + previewWidth, previewCoords[1].y + numSegs * previewWidth, GREEN);
+    numSegs = 3;
+    drawRectangle(previewCoords[2].x, previewCoords[2].y, previewCoords[2].x + previewWidth, previewCoords[2].y + numSegs * previewWidth, CYAN);
+    drawRectangle(previewCoords[3].x, previewCoords[3].y, previewCoords[3].x + previewWidth, previewCoords[3].y + numSegs * previewWidth, MAGENTA);
+    numSegs = 2;
+    drawRectangle(previewCoords[4].x, previewCoords[4].y, previewCoords[4].x + previewWidth, previewCoords[4].y + numSegs * previewWidth, GREY);
+}
+
+void drawRectangle(int x0, int y0, int x1, int y1, short int colour)
+{
+    for (int dx = 0; dx < x1 - x0; dx++)
+    {
+        draw_line(x0 + dx, y0, x0 + dx, y1, colour);
+    }
+}
+
+void drawPreviewHit(int shipNum, int segNum)
+{
+    int x = previewCoords[shipNum].x;
+    int y = previewCoords[shipNum].y;
+
+    draw_line(x, y + previewWidth * segNum, x + previewWidth - 1, y + previewWidth * (segNum + 1), RED);
+    draw_line(x, y + previewWidth * (segNum + 1), x + previewWidth - 1, y + previewWidth * segNum, RED);
+}
+
+void drawPreview(int player)
+{
+    DrawWordLine("--- Ship Status --- ", 14,0);
+    drawShipPreview(player);
+
+    for (int shipNum = 0; shipNum < 5; shipNum++)
+    {
+        Ship s = (player == 1) ? Player1Ships[shipNum] : Player2Ships[shipNum];
+        int n = sizeof(s.Segments) / sizeof(s.Segments[0]);
+        for (int i = 0; i < n; i++)
+        {
+            if (s.Segments[i].hit == 1)
+            {
+                drawPreviewHit(shipNum, i);
+            }
+        }
+    }
 }
