@@ -115,9 +115,10 @@ bool inBounds(int x, int y);
 void DrawWordLine(char *cs, int lineY, int x);
 void clearText();
 void takeTurn();
-int hitType(int x, int y, int player);//PLayer is the player getting shot at
-
+int hitType(int x, int y, int player); //PLayer is the player getting shot at
+void updateSunkFlag(Ship *s);
 void drawShipTest();
+ShipSegment *SegmentHit(int x, int y, int player);
 
 int main(void)
 {
@@ -529,18 +530,58 @@ void clearText()
 void takeTurn()
 {
     Coord shot;
-    shot = ChooseHitPlacement(5,5);
-    while (Player1GameBoard[shot.x][shot.y] == 0)
+    shot = ChooseHitPlacement(5, 5);
+    while (Player1GameBoard[shot.x][shot.y] != 0)
     {
         //Check if position has already been guessed
-        shot = ChooseHitPlacement(shot.x,shot.y);
+        shot = ChooseHitPlacement(shot.x, shot.y);
     }
 
     //Update Player's gameboard
-    Player1GameBoard[shot.x][shot.y] == hitType(shot.x, shot.y, 1);
+    Player1GameBoard[shot.x][shot.y] = hitType(shot.x, shot.y, 2);
+    DrawGrid();
 }
 
-int hitType(int x, int y, int player){
-    Ship * targetShips = (player == 1) ?  Player1Ships : Player2Ships;
-    return 1;
+int hitType(int x, int y, int player)
+{
+    ShipSegment *hitSeg = SegmentHit(x, y, player);
+    if (hitSeg == NULL)
+    {
+        return 1;
+    }
+    hitSeg->hit = 1;
+    return 2;
+}
+
+ShipSegment *SegmentHit(int x, int y, int player)
+{
+    for (int shipNum = 0; shipNum < 5; shipNum++)
+    {
+        Ship s = (player == 1) ? Player1Ships[shipNum] : Player2Ships[shipNum];
+        int n = sizeof(s.Segments) / sizeof(s.Segments[0]);
+        for (int i = 0; i < n; i++)
+        {
+            if (s.Segments[i].X == x && s.Segments[i].Y == y)
+            { //HIT!
+                return &s.Segments[i];
+            }
+        }
+    }
+    //Does not belong to any ships
+    return NULL;
+}
+
+void updateSunkFlag(Ship *s)
+{
+    int n = sizeof(s->Segments) / sizeof(s->Segments[0]);
+
+    for (int i = 0; i < n; i++)
+    {
+        if (s->Segments[i].hit == 0)
+        {
+            return;
+        }
+    }
+
+    s->sunk = 1;
 }
