@@ -103,6 +103,9 @@ void ClearBoard();
 bool inBounds(int x, int y);
 void DrawWordLine(char *cs, int lineY, int x);
 void clearText();
+Ship rotateShip(Ship myShip);
+Ship rotateDown(Ship myShip);
+Ship rotateUp(Ship myShip);
 
 void drawShipTest();
 
@@ -123,6 +126,45 @@ int main(void)
 	//ChooseHitPlacement();
 	drawHit(1,7);
 	drawMiss(0,7);
+}
+
+Ship rotateShip(Ship myShip){
+	bool rotateToDown = true;
+	if (myShip.Segments[0].X == myShip.Segments[1].X){
+		// if two X coords are same (ship is vertical) and need to rotate up
+		rotateToDown = false;
+	}
+	if (rotateToDown){//rotate Down
+		myShip = rotateDown(myShip);
+	}
+	else { //rotate Up
+		myShip = rotateUp(myShip);
+	}
+	return myShip;
+}
+
+Ship rotateUp(Ship myShip){
+	if ((myShip.Segments[0].X + myShip.type - 1) > 9) return myShip;
+	int len = myShip.type;
+	int allY = myShip.Segments[0].Y;
+	int startX = myShip.Segments[0].X;
+	for (int iter = 1; iter < len; iter++){ //for all points after the topRight Point
+		myShip.Segments[iter].X = startX + iter; //move down X as needed
+		myShip.Segments[iter].Y = allY; //all have same Y
+	}
+	return myShip;
+}
+
+Ship rotateDown(Ship myShip){
+	if ((myShip.Segments[0].Y + myShip.type - 1) > 9) return myShip;
+	int len = myShip.type;
+	int allX = myShip.Segments[0].X;
+	int startY = myShip.Segments[0].Y;
+	for (int iter = 1; iter < len; iter++){//for all points after the topRight Point
+		myShip.Segments[iter].X = allX;//all have same X
+		myShip.Segments[iter].Y = startY + iter;//move down Y as needed
+	}
+	return myShip;
 }
 
 void drawShipTest()
@@ -154,19 +196,19 @@ void drawShipTest()
     ShipSegment seg9 = ShipSegmentDefault;
     ShipSegment seg0 = ShipSegmentDefault;
     seg6.type = 0;
-    seg6.X = 2;
+    seg6.X = 5;
     seg6.Y = 7;
     seg7.type = 0;
-    seg7.X = 2;
+    seg7.X = 5;
     seg7.Y = 6;
     seg8.type = 0;
-    seg8.X = 2;
+    seg8.X = 5;
     seg8.Y = 5;
     seg9.type = 0;
-    seg9.X = 2;
+    seg9.X = 5;
     seg9.Y = 4;
     seg0.type = 0;
-    seg0.X = 2;
+    seg0.X = 5;
     seg0.Y = 3;
 
     ShipSegment myArr[] = {seg1, seg2, seg3, seg4, seg5};
@@ -176,7 +218,10 @@ void drawShipTest()
     myShip.Segments = myArr;
     tShip.Segments = tArr;
     drawShip(myShip);
+	tShip = rotateShip(tShip);
     drawShip(tShip);
+	//Ship t2Ship = rotateShip(tShip);
+    //drawShip(t2Ship);
 }
 
 void plot_pixel(int x, int y, short int line_color)
