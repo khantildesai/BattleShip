@@ -10,6 +10,7 @@
 #define HEX5_HEX4_BASE 0xFF200030
 #define SW_BASE 0xFF200040
 #define KEY_BASE 0xFF200050
+#define PS2_BASE 0xFF200100
 #define TIMER_BASE 0xFF202000
 #define PIXEL_BUF_CTRL_BASE 0xFF203020
 #define CHAR_BUF_CTRL_BASE 0xFF203030
@@ -130,6 +131,7 @@ void drawHits_Miss(int player);
 void drawRectangle(int x0, int y0, int x1, int y1, short int colour);
 void drawPreviewHit(int shipNum, int segNum);
 void drawPreview(int player);
+char WaitForKeyPress();
 
 int main(void)
 {
@@ -338,11 +340,14 @@ void DrawCursor(int gridx, int gridy)
     draw_line(22 + x0, y0, 22 + x0, 22 + y0, RED);       // right
 }
 
+
 Coord ChooseHitPlacement(int x_start, int y_start)
 {
-    int count = 0;
+
     DrawCursor(x_start, y_start);
-    while (count < 5)
+
+    // char key = WaitForKeyPress();
+    while (1)
     {
         char key = WaitForButtonPress();
         if (key == 'X')
@@ -376,9 +381,7 @@ Coord ChooseHitPlacement(int x_start, int y_start)
         DrawGrid();
 
         DrawCursor(x_start, y_start);
-        //count++;
     }
-    printf("SHOTS FIYAED AT (%d, %d)", x_start, y_start);
     Coord placement = {x_start, y_start};
     return placement;
 }
@@ -426,6 +429,41 @@ char WaitForButtonPress()
     }
     return 'L';
 }
+
+char WaitForKeyPress()
+{
+    volatile int *PS2_ctl_ptr = (int *)(PS2_BASE + 0x4);
+    //nsigned char keyPress;
+    *PS2_ctl_ptr = 0xF; //enable interrupts
+    volatile int *PS2_Ptr = (int *)PS2_BASE;
+    //unsigned char keyPress;
+    int inter = *PS2_ctl_ptr;
+    int PS2_data = *PS2_Ptr;
+    *(PS2_Ptr) = 0xFF;
+
+    //Wait for Interupt bit to go to 1, Rvail > 0 and Rvalid to go to 1
+    while ((PS2_data & 0xFFFF0000 == 0)) //&& (inter & 0x100 == 0) && PS2_data & 0x8000 == 0)
+    {                                    //Read from
+        inter = *PS2_ctl_ptr;            //PS2 data
+        PS2_data = *PS2_Ptr;             // PS2 control
+    }
+
+    int PS3_data = *PS2_Ptr;
+    char c = PS3_data & 0xFF;
+    printf("%c", c);
+    /*if (PS2_data == 't')
+    { //Right Key Pressed
+        return '>';
+        //printf("%c", keyPress);
+    }
+    else if (PS2_data == 'k')
+    { // Left Key Pressed
+        return '<';
+    }*/
+
+    return "L";
+}
+
 //void draw_line(int x0, int y0, int x1, int y1, short int line_color)
 void drawShipSegment(ShipSegment seg, short int colour)
 {
