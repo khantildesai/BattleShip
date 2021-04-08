@@ -122,6 +122,9 @@ void clearText();
 Ship rotateShip(Ship myShip);
 Ship rotateDown(Ship myShip);
 Ship rotateUp(Ship myShip);
+Ship translateShip(Ship myShip, int x, int y);
+Ship translateX(Ship myShip, int x);
+Ship translateY(Ship myShip, int y);
 
 void takeTurn(int player);
 int hitType(int x, int y, int player); //PLayer is the player getting shot at
@@ -149,6 +152,39 @@ int main(void)
 
     drawShipTest();
     playGame();
+}
+
+Ship translateShip(Ship myShip, int x, int y){
+	//check validity of translation
+	if ((x < -1) | (x > 1) | (y < -1) | (y > 1)) return myShip;
+	//apply translation to myShip
+	myShip = translateX(myShip, x);
+	myShip = translateY(myShip, y);
+	return myShip;
+}
+
+Ship translateY(Ship myShip, int y){
+	int len = myShip.type;
+	Ship justInCase = myShip;
+	for (int iter = 0; iter < len; iter++){
+		myShip.Segments[iter].Y += y;
+		if (!inBounds(myShip.Segments[iter].X, myShip.Segments[iter].Y)){
+			return justInCase;
+		}
+	}
+	return myShip;
+}
+
+Ship translateX(Ship myShip, int x){
+	int len = myShip.type;
+	Ship justInCase = myShip;
+	for (int iter = 0; iter < len; iter++){
+		myShip.Segments[iter].X += x;
+		if (!inBounds(myShip.Segments[iter].X, myShip.Segments[iter].Y)){
+			return justInCase;
+		}
+	}
+	return myShip;
 }
 
 Ship rotateShip(Ship myShip){
@@ -243,8 +279,8 @@ void drawShipTest()
     drawShip(myShip);
 	tShip = rotateShip(tShip);
     drawShip(tShip);
-	//Ship t2Ship = rotateShip(tShip);
-    //drawShip(t2Ship);
+	Ship t2Ship = translateShip(tShip, 1, 1);
+    drawShip(t2Ship);
 }
 
 void plot_pixel(int x, int y, short int line_color)
