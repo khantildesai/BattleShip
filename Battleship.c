@@ -1002,8 +1002,7 @@ ShipSegment *SegmentHit(int x, int y, int currPlayer)
         //sets ship to enemy ships
         Ship s = (currPlayer == 2) ? Player1Ships[shipNum] : Player2Ships[shipNum];
         //finds number of segments
-        int n = sizeof(s.Segments) / sizeof(s.Segments[0]);
-
+        int n = s.type;
         //Iterates through segments checking the x and y position
         for (int i = 0; i < n; i++)
         {
@@ -1019,7 +1018,7 @@ ShipSegment *SegmentHit(int x, int y, int currPlayer)
 
 void updateSunkFlag(Ship *s)
 {
-    int n = sizeof(s->Segments) / sizeof(s->Segments[0]);
+    int n = s->type;
 
     for (int i = 0; i < n; i++)
     {
