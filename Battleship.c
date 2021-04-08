@@ -89,6 +89,9 @@ struct Player
     Ship Ships[];
 };
 
+int numShipsPlaced1 = 0;
+int numShipsPlaced2 = 0;
+
 Ship Player1Ships[5];
 Ship Player2Ships[5];
 
@@ -99,6 +102,9 @@ struct Coord
     int y; //Y Coordinate
 };
 typedef struct Coord Coord;
+
+ShipSegment player1Segs[5][5];
+ShipSegment player2Segs[5][5];
 
 //Top left pixel        5           4                       3                           3           2
 Coord previewCoords[] = {{15 + 2 * previewWidth, 70}, {10 + previewWidth, 70}, {5, 70}, {10 + previewWidth, 70 + 5 * previewWidth}, {5, 70 + 4 * previewWidth}};
@@ -111,6 +117,7 @@ void DrawGrid();
 void DrawCursor(int gridx, int gridy);
 void drawShipSegment(ShipSegment seg, short int colour);
 void drawShip(Ship ship);
+void undrawShip(Ship ship);
 void drawHit(int X, int Y);
 void drawMiss(int X, int Y);
 void ClearGridSeg(int gridx, int gridy);
@@ -120,6 +127,18 @@ void ClearBoard();
 bool inBounds(int x, int y);
 void DrawWordLine(char *cs, int lineY, int x);
 void clearText();
+Ship rotateShip(Ship myShip);
+Ship rotateDown(Ship myShip);
+Ship rotateUp(Ship myShip);
+Ship translateShip(Ship myShip, int x, int y);
+Ship translateX(Ship myShip, int x);
+Ship translateY(Ship myShip, int y);
+Ship selectShip(int shipNum, int playerNum);
+bool placementValid(int playerNum, Ship);
+bool placementValid1(Ship thisShip);
+bool placementValid2(Ship thisShip);
+void drawAllPlacedShips(int playerNum);
+
 void takeTurn(int player);
 int hitType(int x, int y, int player); //PLayer is the player getting shot at
 void updateSunkFlag(Ship *s);
@@ -139,14 +158,91 @@ int main(void)
     /* Read location of the pixel buffer from the pixel buffer controller */
     pixel_buffer_start = *pixel_ctrl_ptr;
 
-    Setup();
-
     clear_screen();
     clearText();
     DrawGrid();
+	
+	Setup();
+	printf("1");
 
     drawShipTest();
     playGame();
+}
+
+Ship translateShip(Ship myShip, int x, int y){
+	//check validity of translation
+	if ((x < -1) | (x > 1) | (y < -1) | (y > 1)) return myShip;
+	if ((myShip.type + myShip.Segments[0].X + x - 1) > 9) return myShip;
+	if ((myShip.Segments[0].X + x) < 0) return myShip;
+	if ((myShip.Segments[0].Y + y) > 9) return myShip;
+	if ((myShip.Segments[0].Y + y) < 0) return myShip;
+	//apply translation to myShip
+	myShip = translateX(myShip, x);
+	myShip = translateY(myShip, y);
+	return myShip;
+}
+
+Ship translateY(Ship myShip, int y){
+	int len = myShip.type;
+	Ship justInCase = myShip;
+	for (int iter = 0; iter < len; iter++){
+		myShip.Segments[iter].Y += y;
+		if (!inBounds(myShip.Segments[iter].X, myShip.Segments[iter].Y)){
+			return justInCase;
+		}
+	}
+	return myShip;
+}
+
+Ship translateX(Ship myShip, int x){
+	int len = myShip.type;
+	Ship justInCase = myShip;
+	for (int iter = 0; iter < len; iter++){
+		myShip.Segments[iter].X += x;
+		if (!inBounds(myShip.Segments[iter].X, myShip.Segments[iter].Y)){
+			return justInCase;
+		}
+	}
+	return myShip;
+}
+
+Ship rotateShip(Ship myShip){
+	bool rotateToDown = true;
+	if (myShip.Segments[0].X == myShip.Segments[1].X){
+		// if two X coords are same (ship is vertical) and need to rotate up
+		rotateToDown = false;
+	}
+	if (rotateToDown){//rotate Down
+		myShip = rotateDown(myShip);
+	}
+	else { //rotate Up
+		myShip = rotateUp(myShip);
+	}
+	return myShip;
+}
+
+Ship rotateUp(Ship myShip){
+	if ((myShip.Segments[0].X + myShip.type - 1) > 9) return myShip;
+	int len = myShip.type;
+	int allY = myShip.Segments[0].Y;
+	int startX = myShip.Segments[0].X;
+	for (int iter = 1; iter < len; iter++){ //for all points after the topRight Point
+		myShip.Segments[iter].X = startX + iter; //move down X as needed
+		myShip.Segments[iter].Y = allY; //all have same Y
+	}
+	return myShip;
+}
+
+Ship rotateDown(Ship myShip){
+	if ((myShip.Segments[0].Y + myShip.type - 1) > 9) return myShip;
+	int len = myShip.type;
+	int allX = myShip.Segments[0].X;
+	int startY = myShip.Segments[0].Y;
+	for (int iter = 1; iter < len; iter++){//for all points after the topRight Point
+		myShip.Segments[iter].X = allX;//all have same X
+		myShip.Segments[iter].Y = startY + iter;//move down Y as needed
+	}
+	return myShip;
 }
 
 void drawShipTest()
@@ -178,19 +274,19 @@ void drawShipTest()
     ShipSegment seg9 = ShipSegmentDefault;
     ShipSegment seg0 = ShipSegmentDefault;
     seg6.type = 0;
-    seg6.X = 2;
+    seg6.X = 5;
     seg6.Y = 7;
     seg7.type = 0;
-    seg7.X = 2;
+    seg7.X = 5;
     seg7.Y = 6;
     seg8.type = 0;
-    seg8.X = 2;
+    seg8.X = 5;
     seg8.Y = 5;
     seg9.type = 0;
-    seg9.X = 2;
+    seg9.X = 5;
     seg9.Y = 4;
     seg0.type = 0;
-    seg0.X = 2;
+    seg0.X = 5;
     seg0.Y = 3;
 
     ShipSegment myArr[] = {seg1, seg2, seg3, seg4, seg5};
@@ -200,7 +296,10 @@ void drawShipTest()
     myShip.Segments = myArr;
     tShip.Segments = tArr;
     drawShip(myShip);
+	tShip = rotateShip(tShip);
     drawShip(tShip);
+	Ship t2Ship = translateShip(tShip, 1, 1);
+    drawShip(t2Ship);
 }
 
 void plot_pixel(int x, int y, short int line_color)
@@ -306,8 +405,132 @@ void Setup()
             Player2GameBoard[P1GBSetter][P1GBSetter2] = 0;
         }
     }
+	//iterate over ship segment arrays to set them up
+	//ShipSegment player1Segs[5][5];
+	//ShipSegment player2Segs[5][5];
+	for (int shipIter = 0; shipIter < 5; shipIter++){
+		for (int segIter = 0; segIter < 5; segIter++){
+			player1Segs[shipIter][segIter] = ShipSegmentDefault;
+			player1Segs[shipIter][segIter].X = segIter;
+			player1Segs[shipIter][segIter].Y = 0;
+			player2Segs[shipIter][segIter] = ShipSegmentDefault;
+			player2Segs[shipIter][segIter].X = segIter;
+			player2Segs[shipIter][segIter].Y = 0;
+		}
+	}
+	
+	//iterate over all ships that player will need to make
+	for (int placeShipIter = 0; placeShipIter < 5; placeShipIter++){
+		Ship curr = selectShip(placeShipIter, 1); //ship we will move around and place
+		drawShip(curr);
+		bool placing = true;
+		while (placing){
+			char key = WaitForButtonPress();
+			if (key == '>') {
+				undrawShip(curr);
+				curr = translateShip(curr, 1, 0);
+			}
+			if (key == '<'){
+				undrawShip(curr);
+				curr = translateShip(curr, -1, 0);
+			}
+			if (key == '^'){
+				undrawShip(curr);
+				curr = translateShip(curr, 0, 1);
+			}
+			if (key == 'v'){
+				undrawShip(curr);
+				curr = translateShip(curr, 0, -1);
+			}
+			if (key == 'X'){
+				if (placementValid(1, curr)){
+					placing = false;
+					numShipsPlaced1++;
+					Player1Ships[placeShipIter] = curr;
+				}
+			}
+			drawAllPlacedShips(1);
+			drawShip(curr);
+		}
+	}
+	
 }
 
+void drawAllPlacedShips(int playerNum){
+	for (int shipIter = 0; shipIter < numShipsPlaced1; shipIter++){
+		if (playerNum == 1) drawShip(Player1Ships[shipIter]);
+		else drawShip(Player2Ships[shipIter]);
+	}
+	return;
+}
+
+bool placementValid(int playerNum, Ship thisShip){
+	if (playerNum == 1) return placementValid1(thisShip);
+	else return placementValid2(thisShip);
+}
+
+bool placementValid1(Ship thisShip){
+	int lookAhead = 5;
+	for (int shipIter = 0; shipIter < numShipsPlaced1; shipIter++){
+		if (shipIter != 2) lookAhead -=1; //destroyer submarine have same len
+		if (thisShip.Segments[0].Y != Player1Ships[shipIter].Segments[0].Y) continue;
+		if (thisShip.Segments[0].X > (Player1Ships[shipIter].Segments[0].X + lookAhead)){
+			if (!((thisShip.Segments[0].X + thisShip.type - 1) < Player1Ships[shipIter].Segments[0].X)){
+				return false;
+			}
+		}
+		else return false;
+	}
+	return true;
+}
+
+bool placementValid2(Ship thisShip){
+	int lookAhead = 5;
+	for (int shipIter = 0; shipIter < numShipsPlaced2; shipIter++){
+		if (shipIter != 2) lookAhead -=1; //destroyer submarine have same len
+		if (thisShip.Segments[0].Y != Player2Ships[shipIter].Segments[0].Y) continue;
+		if (thisShip.Segments[0].X > (Player2Ships[shipIter].Segments[0].X + lookAhead)){
+			if (!((thisShip.Segments[0].X + thisShip.type - 1) < Player2Ships[shipIter].Segments[0].X)){
+				return false;
+			}
+		}
+		else return false;
+	}
+	return true;
+}
+
+Ship selectShip(int shipNum, int playerNum){
+	if (shipNum == 0) {
+		Ship result = Carrier;
+		if (playerNum == 1) result.Segments = player1Segs[shipNum];
+		if (playerNum == 2) result.Segments = player2Segs[shipNum];
+		return result;
+	}
+	else if (shipNum == 1) {
+		Ship result =  Battleship;
+		if (playerNum == 1) result.Segments = player1Segs[shipNum];
+		if (playerNum == 2) result.Segments = player2Segs[shipNum];
+		return result;
+	}
+	else if (shipNum == 2){
+		Ship result = Destroyer;
+		if (playerNum == 1) result.Segments = player1Segs[shipNum];
+		if (playerNum == 2) result.Segments = player2Segs[shipNum];
+		return result;
+	}
+	else if (shipNum == 3){
+		Ship result = Submarine;
+		if (playerNum == 1) result.Segments = player1Segs[shipNum];
+		if (playerNum == 2) result.Segments = player2Segs[shipNum];
+		return result;
+	}
+	else {
+		Ship result = PatrolBoat;
+		if (playerNum == 1) result.Segments = player1Segs[shipNum];
+		if (playerNum == 2) result.Segments = player2Segs[shipNum];
+		return result;
+	}
+}
 //Draws game grid
 void DrawGrid()
 {
@@ -482,6 +705,14 @@ void drawShip(Ship ship)
     for (int segIter = 0; segIter < ship.type; segIter++)
     {
         drawShipSegment(ship.Segments[segIter], ship.colour);
+    }
+}
+
+void undrawShip(Ship ship)
+{
+    for (int segIter = 0; segIter < ship.type; segIter++)
+    {
+        drawShipSegment(ship.Segments[segIter], 0x0000);
     }
 }
 
