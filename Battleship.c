@@ -10,7 +10,9 @@
 #define HEX5_HEX4_BASE 0xFF200030
 #define SW_BASE 0xFF200040
 #define KEY_BASE 0xFF200050
-#define TIMER_BASE 0xFF202000
+#define PS2_BASE 0xFF200100
+//#define TIMER_BASE 0xFF202000
+#define TIMER_BASE 0xFFFEC600 // I think this one is right :/
 #define PIXEL_BUF_CTRL_BASE 0xFF203020
 #define CHAR_BUF_CTRL_BASE 0xFF203030
 
@@ -108,24 +110,61 @@ ShipSegment player2Segs[5][5];
 //Top left pixel        5           4                       3                           3           2
 Coord previewCoords[] = {{15 + 2 * previewWidth, 70}, {10 + previewWidth, 70}, {5, 70}, {10 + previewWidth, 70 + 5 * previewWidth}, {5, 70 + 4 * previewWidth}};
 
+//Allows user to select position of their ships
 void Setup();
+//swaps two integers
 void swap(int *, int *);
+
+//Clears the entire pixel buffer pixel by pixel
 void clear_screen();
+
+//Draws line form (x0,y0) to (x1,y1) in line_color colour
 void draw_line(int x0, int y0, int x1, int y1, short int line_color);
+
+//Draws grid lines
 void DrawGrid();
+
+//draws red cursor at grid positon x y
 void DrawCursor(int gridx, int gridy);
+
+//Draws single ship segment in specified colour
 void drawShipSegment(ShipSegment seg, short int colour);
+
+//Draws an entire ship
 void drawShip(Ship ship);
+
+//removed a ship from the screen (draws in black)
 void undrawShip(Ship ship);
+
+//Draws a red X at grid position x y
 void drawHit(int X, int Y);
+
+//Draws green circle at grid position x y
 void drawMiss(int X, int Y);
+//Clears a single grid segment at grid positon x y
 void ClearGridSeg(int gridx, int gridy);
+
+//Allows user to specify cursor position and 'shoot'
 Coord ChooseHitPlacement(int x_start, int y_start);
+
+//Returns random grid coordinate from (0-9, 0-9)
+Coord randPlacement();
+
+//Waits for a keybutton to be pressed or SW 0 Toggled 0-1-0
 char WaitForButtonPress();
+
+//Clears all segments inside of grid
 void ClearBoard();
+
+//Checks if a grid x y are within grid bounds
 bool inBounds(int x, int y);
+
+//Draws single line of text at specified x y
 void DrawWordLine(char *cs, int lineY, int x);
+
+//Clears all drawn characters
 void clearText();
+
 Ship rotateShip(Ship myShip);
 Ship rotateDown(Ship myShip);
 Ship rotateUp(Ship myShip);
@@ -138,109 +177,158 @@ bool placementValid1(Ship thisShip);
 bool placementValid2(Ship thisShip);
 void drawAllPlacedShips(int playerNum);
 
-void takeTurn(int player);
-int hitType(int x, int y, int player); //PLayer is the player getting shot at
+//Checks if a x y guess was hit or miss
+int hitType(int x, int y, int currPlayer);
+
+//Checks if all segments have been hit and updates flag
 void updateSunkFlag(Ship *s);
 void drawShipTest();
-ShipSegment *SegmentHit(int x, int y, int player);
+
+//Returns segment that was struck, if none returns nullptr
+ShipSegment *SegmentHit(int x, int y, int currPlayer);
+
+//Wrapper for entire game play, alternated until one player wins
 int playGame();
-void drawShipPreview(int player);
-void drawHits_Miss(int player);
+
+//Draws the ships
+void drawShipPreview(int currPlayer);
+
+//Draws the previous attempts of a player
+void drawHits_Miss(int currPlayer);
+
+//Pass in current player's turn and user guesses a position
+void takeTurn(int currPlayer);
+
+//Draws a rectangle from (x0,y0) to (x1,y1) in colour
 void drawRectangle(int x0, int y0, int x1, int y1, short int colour);
+
+//Draws the hit previews for a specified ship
 void drawPreviewHit(int shipNum, int segNum);
-void drawPreview(int player);
+
+//Pass Current Player's turn
+void drawPreview(int currPlayer);
+
+//Returns keyboard key press
+char WaitForKeyPress(); //BROKEN ATM
+
+int WaitForTime(int seconds);
 
 int main(void)
 {
     volatile int *pixel_ctrl_ptr = (int *)PIXEL_BUF_CTRL_BASE;
     /* Read location of the pixel buffer from the pixel buffer controller */
     pixel_buffer_start = *pixel_ctrl_ptr;
+    volatile int done = WaitForTime(10);
+    if (done)
+    {
+        clear_screen();
+        clearText();
+        DrawGrid();
 
-    clear_screen();
-    clearText();
-    DrawGrid();
-	
-	Setup();
-	printf("1");
+        Setup();
+        printf("1");
 
-    drawShipTest();
-    playGame();
+        drawShipTest();
+        playGame();
+    }
 }
 
-Ship translateShip(Ship myShip, int x, int y){
-	//check validity of translation
-	if ((x < -1) | (x > 1) | (y < -1) | (y > 1)) return myShip;
-	if ((myShip.type + myShip.Segments[0].X + x - 1) > 9) return myShip;
-	if ((myShip.Segments[0].X + x) < 0) return myShip;
-	if ((myShip.Segments[0].Y + y) > 9) return myShip;
-	if ((myShip.Segments[0].Y + y) < 0) return myShip;
-	//apply translation to myShip
-	myShip = translateX(myShip, x);
-	myShip = translateY(myShip, y);
-	return myShip;
+Ship translateShip(Ship myShip, int x, int y)
+{
+    //check validity of translation
+    if ((x < -1) | (x > 1) | (y < -1) | (y > 1))
+        return myShip;
+    if ((myShip.type + myShip.Segments[0].X + x - 1) > 9)
+        return myShip;
+    if ((myShip.Segments[0].X + x) < 0)
+        return myShip;
+    if ((myShip.Segments[0].Y + y) > 9)
+        return myShip;
+    if ((myShip.Segments[0].Y + y) < 0)
+        return myShip;
+    //apply translation to myShip
+    myShip = translateX(myShip, x);
+    myShip = translateY(myShip, y);
+    return myShip;
 }
 
-Ship translateY(Ship myShip, int y){
-	int len = myShip.type;
-	Ship justInCase = myShip;
-	for (int iter = 0; iter < len; iter++){
-		myShip.Segments[iter].Y += y;
-		if (!inBounds(myShip.Segments[iter].X, myShip.Segments[iter].Y)){
-			return justInCase;
-		}
-	}
-	return myShip;
+Ship translateY(Ship myShip, int y)
+{
+    int len = myShip.type;
+    Ship justInCase = myShip;
+    for (int iter = 0; iter < len; iter++)
+    {
+        myShip.Segments[iter].Y += y;
+        if (!inBounds(myShip.Segments[iter].X, myShip.Segments[iter].Y))
+        {
+            return justInCase;
+        }
+    }
+    return myShip;
 }
 
-Ship translateX(Ship myShip, int x){
-	int len = myShip.type;
-	Ship justInCase = myShip;
-	for (int iter = 0; iter < len; iter++){
-		myShip.Segments[iter].X += x;
-		if (!inBounds(myShip.Segments[iter].X, myShip.Segments[iter].Y)){
-			return justInCase;
-		}
-	}
-	return myShip;
+Ship translateX(Ship myShip, int x)
+{
+    int len = myShip.type;
+    Ship justInCase = myShip;
+    for (int iter = 0; iter < len; iter++)
+    {
+        myShip.Segments[iter].X += x;
+        if (!inBounds(myShip.Segments[iter].X, myShip.Segments[iter].Y))
+        {
+            return justInCase;
+        }
+    }
+    return myShip;
 }
 
-Ship rotateShip(Ship myShip){
-	bool rotateToDown = true;
-	if (myShip.Segments[0].X == myShip.Segments[1].X){
-		// if two X coords are same (ship is vertical) and need to rotate up
-		rotateToDown = false;
-	}
-	if (rotateToDown){//rotate Down
-		myShip = rotateDown(myShip);
-	}
-	else { //rotate Up
-		myShip = rotateUp(myShip);
-	}
-	return myShip;
+Ship rotateShip(Ship myShip)
+{
+    bool rotateToDown = true;
+    if (myShip.Segments[0].X == myShip.Segments[1].X)
+    {
+        // if two X coords are same (ship is vertical) and need to rotate up
+        rotateToDown = false;
+    }
+    if (rotateToDown)
+    { //rotate Down
+        myShip = rotateDown(myShip);
+    }
+    else
+    { //rotate Up
+        myShip = rotateUp(myShip);
+    }
+    return myShip;
 }
 
-Ship rotateUp(Ship myShip){
-	if ((myShip.Segments[0].X + myShip.type - 1) > 9) return myShip;
-	int len = myShip.type;
-	int allY = myShip.Segments[0].Y;
-	int startX = myShip.Segments[0].X;
-	for (int iter = 1; iter < len; iter++){ //for all points after the topRight Point
-		myShip.Segments[iter].X = startX + iter; //move down X as needed
-		myShip.Segments[iter].Y = allY; //all have same Y
-	}
-	return myShip;
+Ship rotateUp(Ship myShip)
+{
+    if ((myShip.Segments[0].X + myShip.type - 1) > 9)
+        return myShip;
+    int len = myShip.type;
+    int allY = myShip.Segments[0].Y;
+    int startX = myShip.Segments[0].X;
+    for (int iter = 1; iter < len; iter++)
+    {                                            //for all points after the topRight Point
+        myShip.Segments[iter].X = startX + iter; //move down X as needed
+        myShip.Segments[iter].Y = allY;          //all have same Y
+    }
+    return myShip;
 }
 
-Ship rotateDown(Ship myShip){
-	if ((myShip.Segments[0].Y + myShip.type - 1) > 9) return myShip;
-	int len = myShip.type;
-	int allX = myShip.Segments[0].X;
-	int startY = myShip.Segments[0].Y;
-	for (int iter = 1; iter < len; iter++){//for all points after the topRight Point
-		myShip.Segments[iter].X = allX;//all have same X
-		myShip.Segments[iter].Y = startY + iter;//move down Y as needed
-	}
-	return myShip;
+Ship rotateDown(Ship myShip)
+{
+    if ((myShip.Segments[0].Y + myShip.type - 1) > 9)
+        return myShip;
+    int len = myShip.type;
+    int allX = myShip.Segments[0].X;
+    int startY = myShip.Segments[0].Y;
+    for (int iter = 1; iter < len; iter++)
+    {                                            //for all points after the topRight Point
+        myShip.Segments[iter].X = allX;          //all have same X
+        myShip.Segments[iter].Y = startY + iter; //move down Y as needed
+    }
+    return myShip;
 }
 
 void drawShipTest()
@@ -294,9 +382,9 @@ void drawShipTest()
     myShip.Segments = myArr;
     tShip.Segments = tArr;
     drawShip(myShip);
-	tShip = rotateShip(tShip);
+    tShip = rotateShip(tShip);
     drawShip(tShip);
-	Ship t2Ship = translateShip(tShip, 1, 1);
+    Ship t2Ship = translateShip(tShip, 1, 1);
     drawShip(t2Ship);
 }
 
@@ -573,9 +661,11 @@ void DrawCursor(int gridx, int gridy)
 
 Coord ChooseHitPlacement(int x_start, int y_start)
 {
-    int count = 0;
+
     DrawCursor(x_start, y_start);
-    while (count < 5)
+
+    // char key = WaitForKeyPress();
+    while (1)
     {
         char key = WaitForButtonPress();
         if (key == 'X')
@@ -609,11 +699,15 @@ Coord ChooseHitPlacement(int x_start, int y_start)
         DrawGrid();
 
         DrawCursor(x_start, y_start);
-        //count++;
     }
-    printf("SHOTS FIYAED AT (%d, %d)", x_start, y_start);
     Coord placement = {x_start, y_start};
     return placement;
+}
+
+Coord randPlacement()
+{
+    Coord shot = {rand() % 10, rand() % 10};
+    return shot;
 }
 
 char WaitForButtonPress()
@@ -659,6 +753,41 @@ char WaitForButtonPress()
     }
     return 'L';
 }
+
+char WaitForKeyPress()
+{
+    volatile int *PS2_ctl_ptr = (int *)(PS2_BASE + 0x4);
+    //nsigned char keyPress;
+    *PS2_ctl_ptr = 0xF; //enable interrupts
+    volatile int *PS2_Ptr = (int *)PS2_BASE;
+    //unsigned char keyPress;
+    int inter = *PS2_ctl_ptr;
+    int PS2_data = *PS2_Ptr;
+    *(PS2_Ptr) = 0xFF;
+
+    //Wait for Interupt bit to go to 1, Rvail > 0 and Rvalid to go to 1
+    while ((PS2_data & 0xFFFF0000 == 0)) //&& (inter & 0x100 == 0) && PS2_data & 0x8000 == 0)
+    {                                    //Read from
+        inter = *PS2_ctl_ptr;            //PS2 data
+        PS2_data = *PS2_Ptr;             // PS2 control
+    }
+
+    int PS3_data = *PS2_Ptr;
+    char c = PS3_data & 0xFF;
+    printf("%c", c);
+    /*if (PS2_data == 't')
+    { //Right Key Pressed
+        return '>';
+        //printf("%c", keyPress);
+    }
+    else if (PS2_data == 'k')
+    { // Left Key Pressed
+        return '<';
+    }*/
+
+    return "L";
+}
+
 //void draw_line(int x0, int y0, int x1, int y1, short int line_color)
 void drawShipSegment(ShipSegment seg, short int colour)
 {
@@ -776,20 +905,22 @@ void clearText()
     }
 }
 
-void takeTurn(int player)
+void takeTurn(int currPlayer)
 {
+
     Coord shot;
-    shot = ChooseHitPlacement(5, 5);
-    if (player == 1)
+    if (currPlayer == 1)
     {
-        while (Player1GameBoard[shot.x][shot.y] != 0)
+        shot = ChooseHitPlacement(5, 5);
+
+        while (Player2GameBoard[shot.x][shot.y] != 0)
         {
             //Check if position has already been guessed
             shot = ChooseHitPlacement(shot.x, shot.y);
         }
-        Player1GameBoard[shot.x][shot.y] = hitType(shot.x, shot.y, 2);
+        Player2GameBoard[shot.x][shot.y] = hitType(shot.x, shot.y, currPlayer);
 
-        if (Player1GameBoard[shot.x][shot.y] == 1)
+        if (Player2GameBoard[shot.x][shot.y] == 1)
         {
             DrawWordLine("Miss", 5, 0);
         }
@@ -800,13 +931,14 @@ void takeTurn(int player)
     }
     else
     {
-        while (Player2GameBoard[shot.x][shot.y] != 0)
-        {
-            //Check if position has already been guessed
-            shot = ChooseHitPlacement(shot.x, shot.y);
-        }
-        Player2GameBoard[shot.x][shot.y] = hitType(shot.x, shot.y, 2);
-        if (Player2GameBoard[shot.x][shot.y] == 1)
+        do
+        { //Generate Guess
+            shot = randPlacement();
+        } while (Player1GameBoard[shot.x][shot.y] != 0); // Check if position alreadt guessed
+
+        //Position not guessed
+        Player1GameBoard[shot.x][shot.y] = hitType(shot.x, shot.y, currPlayer);
+        if (Player1GameBoard[shot.x][shot.y] == 1)
         {
             DrawWordLine("Miss", 5, 0);
         }
@@ -819,23 +951,29 @@ void takeTurn(int player)
     DrawGrid();
 }
 
-int hitType(int x, int y, int player)
+int hitType(int x, int y, int currPlayer)
 {
-    ShipSegment *hitSeg = SegmentHit(x, y, player);
+    ShipSegment *hitSeg = SegmentHit(x, y, currPlayer);
     if (hitSeg == NULL)
     {
         return 1;
     }
+    //Set hit flag of segment to 1 and return 2
     hitSeg->hit = 1;
     return 2;
 }
 
-ShipSegment *SegmentHit(int x, int y, int player)
+ShipSegment *SegmentHit(int x, int y, int currPlayer)
 {
+    //Iterates through all the ships
     for (int shipNum = 0; shipNum < 5; shipNum++)
     {
-        Ship s = (player == 1) ? Player1Ships[shipNum] : Player2Ships[shipNum];
-        int n = sizeof(s.Segments) / sizeof(s.Segments[0]);
+
+        //sets ship to enemy ships
+        Ship s = (currPlayer == 2) ? Player1Ships[shipNum] : Player2Ships[shipNum];
+        //finds number of segments
+        int n = s.type;
+        //Iterates through segments checking the x and y position
         for (int i = 0; i < n; i++)
         {
             if (s.Segments[i].X == x && s.Segments[i].Y == y)
@@ -850,7 +988,7 @@ ShipSegment *SegmentHit(int x, int y, int player)
 
 void updateSunkFlag(Ship *s)
 {
-    int n = sizeof(s->Segments) / sizeof(s->Segments[0]);
+    int n = s->type;
 
     for (int i = 0; i < n; i++)
     {
@@ -873,24 +1011,31 @@ int playGame()
 
         //Draw grid for Player 1
         DrawWordLine("P1 Turn", 0, 0);
-        drawPreview(2);
-        drawHits_Miss(2);
+
+        drawAllPlacedShips(2); //DEBUGGING
+
+        //Draw preview of player 2's ships
+        drawPreview(1);
+        drawHits_Miss(1);
         //PLayer 1 guesses
-        takeTurn(2); //PLayer 1s turn
+        takeTurn(1); //PLayer 1s turn
 
         ClearBoard();
         clearText();
         //Draw grid for Player 2
         DrawWordLine("P2 Turn", 0, 0);
-        drawPreview(1);
-        drawHits_Miss(1);
+        drawAllPlacedShips(1);
+        drawPreview(2);
+        drawHits_Miss(2);
         //Draw grid for Player 2
-        takeTurn(1); //P2 turn
+        takeTurn(2); //P2 turn
+
+        WaitForButtonPress();
     }
     return 0;
 }
 
-void drawShipPreview(int player)
+void drawShipPreview(int currPlayer)
 {
     int numSegs = 5;
     drawRectangle(previewCoords[0].x, previewCoords[0].y, previewCoords[0].x + previewWidth, previewCoords[0].y + numSegs * previewWidth, BLUE);
@@ -920,15 +1065,15 @@ void drawPreviewHit(int shipNum, int segNum)
     draw_line(x, y + previewWidth * (segNum + 1), x + previewWidth - 1, y + previewWidth * segNum, RED);
 }
 
-void drawPreview(int player)
+void drawPreview(int currPlayer)
 {
     DrawWordLine("--- Ship Status --- ", 14, 0);
-    drawShipPreview(player);
+    drawShipPreview(currPlayer);
 
     for (int shipNum = 0; shipNum < 5; shipNum++)
     {
-        Ship s = (player == 1) ? Player1Ships[shipNum] : Player2Ships[shipNum];
-        int n = sizeof(s.Segments) / sizeof(s.Segments[0]);
+        Ship s = (currPlayer == 2) ? Player1Ships[shipNum] : Player2Ships[shipNum];
+        int n = s.type;
         for (int i = 0; i < n; i++)
         {
             if (s.Segments[i].hit == 1)
@@ -939,24 +1084,13 @@ void drawPreview(int player)
     }
 }
 
-void drawHits_Miss(int player)
+void drawHits_Miss(int currPlayer)
 {
     for (int x = 0; x < 10; x++)
     {
         for (int y = 0; y < 10; y++)
         {
-            if (player == 1)
-            {
-                if (Player1GameBoard[x][y] == 1)
-                {
-                    drawMiss(x, y);
-                }
-                else if (Player1GameBoard[x][y] == 2)
-                {
-                    drawHit(x, y);
-                }
-            }
-            else
+            if (currPlayer == 1)
             {
                 if (Player2GameBoard[x][y] == 1)
                 {
@@ -967,6 +1101,45 @@ void drawHits_Miss(int player)
                     drawHit(x, y);
                 }
             }
+            else
+            {
+                if (Player1GameBoard[x][y] == 1)
+                {
+                    drawMiss(x, y);
+                }
+                else if (Player1GameBoard[x][y] == 2)
+                {
+                    drawHit(x, y);
+                }
+            }
         }
     }
+}
+
+int WaitForTime(int seconds)
+{
+    //Clock speed -> 200 MHz
+    int counterVal = seconds * 200000000;
+
+    //Set up base pointers
+    int *loadPtr = (int *)TIMER_BASE;
+    int *controlPtr = (int *)(TIMER_BASE + 0x8);
+    int *interruptPtr = (int *)(TIMER_BASE + 0xc);
+
+    *loadPtr = counterVal;
+
+    *controlPtr = 0x5; //Starts timer
+    *interruptPtr = 0x1;
+
+    int F = *interruptPtr & 0x1;
+    while (F == 0) // Check if interrupt bit is a 0
+    {
+        F = *interruptPtr & 0x1;
+    }
+    // int time = 0;
+    // while(time < 99999999){
+    //     time+=1;
+    // }
+
+    return 1;
 }
