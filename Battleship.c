@@ -452,6 +452,14 @@ void Setup()
 		}
 	}
 	
+	//setup computers ships
+	for (int placeShipIter = 0; placeShipIter < 5; placeShipIter++){
+		Ship curr = selectShip(placeShipIter, 2); //second player ships
+		int transY = (rand()%2) + placeShipIter*2;
+		int transX = rand()%(9-curr.type);
+		curr = translateShip(curr, transX, transY);
+		Player2Ships[placeShipIter] = curr;
+	}
 }
 
 void drawAllPlacedShips(int playerNum){
@@ -469,15 +477,17 @@ bool placementValid(int playerNum, Ship thisShip){
 
 bool placementValid1(Ship thisShip){
 	int lookAhead = 5;
+	bool secondCheck = true;
 	for (int shipIter = 0; shipIter < numShipsPlaced1; shipIter++){
 		if (shipIter != 2) lookAhead -=1; //destroyer submarine have same len
 		if (thisShip.Segments[0].Y != Player1Ships[shipIter].Segments[0].Y) continue;
-		if (thisShip.Segments[0].X > (Player1Ships[shipIter].Segments[0].X + lookAhead)){
-			if (!((thisShip.Segments[0].X + thisShip.type - 1) < Player1Ships[shipIter].Segments[0].X)){
-				return false;
-			}
+		if (!(thisShip.Segments[0].X > (Player1Ships[shipIter].Segments[0].X + lookAhead))){
+			return false;
 		}
-		else return false;
+		else secondCheck = false;
+		if ( secondCheck && !((thisShip.Segments[0].X + thisShip.type - 1) < Player1Ships[shipIter].Segments[0].X)){
+			return false;
+		}
 	}
 	return true;
 }
