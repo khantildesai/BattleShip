@@ -11,7 +11,8 @@
 #define SW_BASE 0xFF200040
 #define KEY_BASE 0xFF200050
 #define PS2_BASE 0xFF200100
-#define TIMER_BASE 0xFF202000
+//#define TIMER_BASE 0xFF202000
+#define TIMER_BASE 0xFFFEC600 // I think this one is right :/
 #define PIXEL_BUF_CTRL_BASE 0xFF203020
 #define CHAR_BUF_CTRL_BASE 0xFF203030
 
@@ -210,21 +211,26 @@ void drawPreview(int currPlayer);
 //Returns keyboard key press
 char WaitForKeyPress(); //BROKEN ATM
 
+int WaitForTime(int seconds);
+
 int main(void)
 {
     volatile int *pixel_ctrl_ptr = (int *)PIXEL_BUF_CTRL_BASE;
     /* Read location of the pixel buffer from the pixel buffer controller */
     pixel_buffer_start = *pixel_ctrl_ptr;
+    volatile int done = WaitForTime(10);
+    if (done)
+    {
+        clear_screen();
+        clearText();
+        DrawGrid();
 
-    clear_screen();
-    clearText();
-    DrawGrid();
+        Setup();
+        printf("1");
 
-    Setup();
-    printf("1");
-
-    drawShipTest();
-    playGame();
+        drawShipTest();
+        playGame();
+    }
 }
 
 Ship translateShip(Ship myShip, int x, int y)
@@ -1103,7 +1109,7 @@ void drawPreview(int currPlayer)
     for (int shipNum = 0; shipNum < 5; shipNum++)
     {
         Ship s = (currPlayer == 2) ? Player1Ships[shipNum] : Player2Ships[shipNum];
-        int n = sizeof(s.Segments) / sizeof(s.Segments[0]);
+        int n = s.type;
         for (int i = 0; i < n; i++)
         {
             if (s.Segments[i].hit == 1)
@@ -1144,4 +1150,32 @@ void drawHits_Miss(int currPlayer)
             }
         }
     }
+}
+
+int WaitForTime(int seconds)
+{
+    //Clock speed -> 200 MHz
+    int counterVal = seconds * 200000000;
+
+    //Set up base pointers
+    int *loadPtr = (int *)TIMER_BASE;
+    int *controlPtr = (int *)(TIMER_BASE + 0x8);
+    int *interruptPtr = (int *)(TIMER_BASE + 0xc);
+
+    *loadPtr = counterVal;
+
+    *controlPtr = 0x5; //Starts timer
+    *interruptPtr = 0x1;
+
+    int F = *interruptPtr & 0x1;
+    while (F == 0) // Check if interrupt bit is a 0
+    {
+        F = *interruptPtr & 0x1;
+    }
+    // int time = 0;
+    // while(time < 99999999){
+    //     time+=1;
+    // }
+
+    return 1;
 }
