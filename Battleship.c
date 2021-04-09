@@ -218,7 +218,7 @@ int main(void)
     volatile int *pixel_ctrl_ptr = (int *)PIXEL_BUF_CTRL_BASE;
     /* Read location of the pixel buffer from the pixel buffer controller */
     pixel_buffer_start = *pixel_ctrl_ptr;
-    volatile int done = WaitForTime(10);
+    volatile int done = WaitForTime(5);
     if (done)
     {
         clear_screen();
@@ -1055,6 +1055,10 @@ int playGame()
         drawHits_Miss(1);
         //PLayer 1 guesses
         takeTurn(1); //PLayer 1s turn
+        drawHits_Miss(1);
+        drawPreview(1);
+        WaitForTime(5);
+
 
         ClearBoard();
         clearText();
@@ -1065,8 +1069,10 @@ int playGame()
         drawHits_Miss(2);
         //Draw grid for Player 2
         takeTurn(2); //P2 turn
-
-        WaitForButtonPress();
+        drawHits_Miss(2);
+        drawPreview(2);
+        WaitForTime(10);
+        //WaitForButtonPress();
     }
     return 0;
 }
@@ -1162,20 +1168,23 @@ int WaitForTime(int seconds)
     int *controlPtr = (int *)(TIMER_BASE + 0x8);
     int *interruptPtr = (int *)(TIMER_BASE + 0xc);
 
+    volatile int *led_ptr = (int *)LEDR_BASE;
     *loadPtr = counterVal;
 
     *controlPtr = 0x5; //Starts timer
     *interruptPtr = 0x1;
-
     int F = *interruptPtr & 0x1;
+
+    while (F == 1) // Check if interrupt bit is a 0
+    {
+        F = *interruptPtr & 0x1;
+        *led_ptr = F;
+    }
+
     while (F == 0) // Check if interrupt bit is a 0
     {
         F = *interruptPtr & 0x1;
+        *led_ptr = F;
     }
-    // int time = 0;
-    // while(time < 99999999){
-    //     time+=1;
-    // }
-
     return 1;
 }
