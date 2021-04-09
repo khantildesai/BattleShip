@@ -213,6 +213,8 @@ char WaitForKeyPress(); //BROKEN ATM
 
 int WaitForTime(int seconds);
 
+bool isAllShipsSunk(int currPlayer);
+
 int main(void)
 {
     volatile int *pixel_ctrl_ptr = (int *)PIXEL_BUF_CTRL_BASE;
@@ -491,141 +493,189 @@ void Setup()
             Player2GameBoard[P1GBSetter][P1GBSetter2] = 0;
         }
     }
-	//iterate over ship segment arrays to set them up
-	//ShipSegment player1Segs[5][5];
-	//ShipSegment player2Segs[5][5];
-	for (int shipIter = 0; shipIter < 5; shipIter++){
-		for (int segIter = 0; segIter < 5; segIter++){
-			player1Segs[shipIter][segIter] = ShipSegmentDefault;
-			player1Segs[shipIter][segIter].X = segIter;
-			player1Segs[shipIter][segIter].Y = 0;
-			player2Segs[shipIter][segIter] = ShipSegmentDefault;
-			player2Segs[shipIter][segIter].X = segIter;
-			player2Segs[shipIter][segIter].Y = 0;
-		}
-	}
-	
-	//iterate over all ships that player will need to make
-	for (int placeShipIter = 0; placeShipIter < 5; placeShipIter++){
-		Ship curr = selectShip(placeShipIter, 1); //ship we will move around and place
-		drawShip(curr);
-		bool placing = true;
-		while (placing){
-			char key = WaitForButtonPress();
-			if (key == '>') {
-				undrawShip(curr);
-				curr = translateShip(curr, 1, 0);
-			}
-			if (key == '<'){
-				undrawShip(curr);
-				curr = translateShip(curr, -1, 0);
-			}
-			if (key == '^'){
-				undrawShip(curr);
-				curr = translateShip(curr, 0, 1);
-			}
-			if (key == 'v'){
-				undrawShip(curr);
-				curr = translateShip(curr, 0, -1);
-			}
-			if (key == 'X'){
-				if (placementValid(1, curr)){
-					placing = false;
-					numShipsPlaced1++;
-					Player1Ships[placeShipIter] = curr;
-				}
-			}
-			drawAllPlacedShips(1);
-			drawShip(curr);
-		}
-	}
-	
-	//setup computers ships
-	for (int placeShipIter = 0; placeShipIter < 5; placeShipIter++){
-		Ship curr = selectShip(placeShipIter, 2); //second player ships
-		int transY = (rand()%2) + placeShipIter*2;
-		int transX = rand()%(9-curr.type);
-		curr = translateShip(curr, transX, transY);
-		Player2Ships[placeShipIter] = curr;
-	}
+    //iterate over ship segment arrays to set them up
+    //ShipSegment player1Segs[5][5];
+    //ShipSegment player2Segs[5][5];
+    for (int shipIter = 0; shipIter < 5; shipIter++)
+    {
+        for (int segIter = 0; segIter < 5; segIter++)
+        {
+            player1Segs[shipIter][segIter] = ShipSegmentDefault;
+            player1Segs[shipIter][segIter].X = segIter;
+            player1Segs[shipIter][segIter].Y = 0;
+            player2Segs[shipIter][segIter] = ShipSegmentDefault;
+            player2Segs[shipIter][segIter].X = segIter;
+            player2Segs[shipIter][segIter].Y = 0;
+        }
+    }
+
+    //iterate over all ships that player will need to make
+    for (int placeShipIter = 0; placeShipIter < 5; placeShipIter++)
+    {
+        Ship curr = selectShip(placeShipIter, 1); //ship we will move around and place
+        drawShip(curr);
+        bool placing = true;
+        while (placing)
+        {
+            char key = WaitForButtonPress();
+            if (key == '>')
+            {
+                undrawShip(curr);
+                curr = translateShip(curr, 1, 0);
+            }
+            if (key == '<')
+            {
+                undrawShip(curr);
+                curr = translateShip(curr, -1, 0);
+            }
+            if (key == '^')
+            {
+                undrawShip(curr);
+                curr = translateShip(curr, 0, 1);
+            }
+            if (key == 'v')
+            {
+                undrawShip(curr);
+                curr = translateShip(curr, 0, -1);
+            }
+            if (key == 'X')
+            {
+                if (placementValid(1, curr))
+                {
+                    placing = false;
+                    numShipsPlaced1++;
+                    Player1Ships[placeShipIter] = curr;
+                }
+            }
+            drawAllPlacedShips(1);
+            drawShip(curr);
+        }
+    }
+
+    //setup computers ships
+    for (int placeShipIter = 0; placeShipIter < 5; placeShipIter++)
+    {
+        Ship curr = selectShip(placeShipIter, 2); //second player ships
+        int transY = (rand() % 2) + placeShipIter * 2;
+        int transX = rand() % (9 - curr.type);
+        curr = translateShip(curr, transX, transY);
+        Player2Ships[placeShipIter] = curr;
+    }
 }
 
-void drawAllPlacedShips(int playerNum){
-	for (int shipIter = 0; shipIter < numShipsPlaced1; shipIter++){
-		if (playerNum == 1) drawShip(Player1Ships[shipIter]);
-		else drawShip(Player2Ships[shipIter]);
-	}
-	return;
+void drawAllPlacedShips(int playerNum)
+{
+    for (int shipIter = 0; shipIter < numShipsPlaced1; shipIter++)
+    {
+        if (playerNum == 1)
+            drawShip(Player1Ships[shipIter]);
+        else
+            drawShip(Player2Ships[shipIter]);
+    }
+    return;
 }
 
-bool placementValid(int playerNum, Ship thisShip){
-	if (playerNum == 1) return placementValid1(thisShip);
-	else return placementValid2(thisShip);
+bool placementValid(int playerNum, Ship thisShip)
+{
+    if (playerNum == 1)
+        return placementValid1(thisShip);
+    else
+        return placementValid2(thisShip);
 }
 
-bool placementValid1(Ship thisShip){
-	int lookAhead = 5;
-	bool secondCheck = true;
-	for (int shipIter = 0; shipIter < numShipsPlaced1; shipIter++){
-		if (shipIter != 2) lookAhead -=1; //destroyer submarine have same len
-		if (thisShip.Segments[0].Y != Player1Ships[shipIter].Segments[0].Y) continue;
-		if (!(thisShip.Segments[0].X > (Player1Ships[shipIter].Segments[0].X + lookAhead))){
-			return false;
-		}
-		else secondCheck = false;
-		if ( secondCheck && !((thisShip.Segments[0].X + thisShip.type - 1) < Player1Ships[shipIter].Segments[0].X)){
-			return false;
-		}
-	}
-	return true;
+bool placementValid1(Ship thisShip)
+{
+    int lookAhead = 5;
+    bool secondCheck = true;
+    for (int shipIter = 0; shipIter < numShipsPlaced1; shipIter++)
+    {
+        if (shipIter != 2)
+            lookAhead -= 1; //destroyer submarine have same len
+        if (thisShip.Segments[0].Y != Player1Ships[shipIter].Segments[0].Y)
+            continue;
+        if (!(thisShip.Segments[0].X > (Player1Ships[shipIter].Segments[0].X + lookAhead)))
+        {
+            return false;
+        }
+        else
+            secondCheck = false;
+        if (secondCheck && !((thisShip.Segments[0].X + thisShip.type - 1) < Player1Ships[shipIter].Segments[0].X))
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
-bool placementValid2(Ship thisShip){
-	int lookAhead = 5;
-	for (int shipIter = 0; shipIter < numShipsPlaced2; shipIter++){
-		if (shipIter != 2) lookAhead -=1; //destroyer submarine have same len
-		if (thisShip.Segments[0].Y != Player2Ships[shipIter].Segments[0].Y) continue;
-		if (thisShip.Segments[0].X > (Player2Ships[shipIter].Segments[0].X + lookAhead)){
-			if (!((thisShip.Segments[0].X + thisShip.type - 1) < Player2Ships[shipIter].Segments[0].X)){
-				return false;
-			}
-		}
-		else return false;
-	}
-	return true;
+bool placementValid2(Ship thisShip)
+{
+    int lookAhead = 5;
+    for (int shipIter = 0; shipIter < numShipsPlaced2; shipIter++)
+    {
+        if (shipIter != 2)
+            lookAhead -= 1; //destroyer submarine have same len
+        if (thisShip.Segments[0].Y != Player2Ships[shipIter].Segments[0].Y)
+            continue;
+        if (thisShip.Segments[0].X > (Player2Ships[shipIter].Segments[0].X + lookAhead))
+        {
+            if (!((thisShip.Segments[0].X + thisShip.type - 1) < Player2Ships[shipIter].Segments[0].X))
+            {
+                return false;
+            }
+        }
+        else
+            return false;
+    }
+    return true;
 }
 
-Ship selectShip(int shipNum, int playerNum){
-	if (shipNum == 0) {
-		Ship result = Carrier;
-		if (playerNum == 1) result.Segments = player1Segs[shipNum];
-		if (playerNum == 2) result.Segments = player2Segs[shipNum];
-		return result;
-	}
-	else if (shipNum == 1) {
-		Ship result =  Battleship;
-		if (playerNum == 1) result.Segments = player1Segs[shipNum];
-		if (playerNum == 2) result.Segments = player2Segs[shipNum];
-		return result;
-	}
-	else if (shipNum == 2){
-		Ship result = Destroyer;
-		if (playerNum == 1) result.Segments = player1Segs[shipNum];
-		if (playerNum == 2) result.Segments = player2Segs[shipNum];
-		return result;
-	}
-	else if (shipNum == 3){
-		Ship result = Submarine;
-		if (playerNum == 1) result.Segments = player1Segs[shipNum];
-		if (playerNum == 2) result.Segments = player2Segs[shipNum];
-		return result;
-	}
-	else {
-		Ship result = PatrolBoat;
-		if (playerNum == 1) result.Segments = player1Segs[shipNum];
-		if (playerNum == 2) result.Segments = player2Segs[shipNum];
-		return result;
-	}
+Ship selectShip(int shipNum, int playerNum)
+{
+    if (shipNum == 0)
+    {
+        Ship result = Carrier;
+        if (playerNum == 1)
+            result.Segments = player1Segs[shipNum];
+        if (playerNum == 2)
+            result.Segments = player2Segs[shipNum];
+        return result;
+    }
+    else if (shipNum == 1)
+    {
+        Ship result = Battleship;
+        if (playerNum == 1)
+            result.Segments = player1Segs[shipNum];
+        if (playerNum == 2)
+            result.Segments = player2Segs[shipNum];
+        return result;
+    }
+    else if (shipNum == 2)
+    {
+        Ship result = Destroyer;
+        if (playerNum == 1)
+            result.Segments = player1Segs[shipNum];
+        if (playerNum == 2)
+            result.Segments = player2Segs[shipNum];
+        return result;
+    }
+    else if (shipNum == 3)
+    {
+        Ship result = Submarine;
+        if (playerNum == 1)
+            result.Segments = player1Segs[shipNum];
+        if (playerNum == 2)
+            result.Segments = player2Segs[shipNum];
+        return result;
+    }
+    else
+    {
+        Ship result = PatrolBoat;
+        if (playerNum == 1)
+            result.Segments = player1Segs[shipNum];
+        if (playerNum == 2)
+            result.Segments = player2Segs[shipNum];
+        return result;
+    }
 }
 //Draws game grid
 void DrawGrid()
@@ -1004,6 +1054,9 @@ void updateSunkFlag(Ship *s)
 int playGame()
 { //NEED TO CHECK WIN CONDITION
     bool gameOver = 0;
+
+    int winningPlayer = 0;
+
     while (!gameOver)
     {
         clearText();
@@ -1021,8 +1074,13 @@ int playGame()
         takeTurn(1); //PLayer 1s turn
         drawHits_Miss(1);
         drawPreview(1);
-        WaitForTime(5);
-
+        if (isAllShipsSunk(1))
+        {
+            DrawWordLine("WINNERRR Player 1", 5, 5);
+            gameOver = 1;
+            winningPlayer = 1;
+        }
+        WaitForTime(2);
 
         ClearBoard();
         clearText();
@@ -1035,9 +1093,16 @@ int playGame()
         takeTurn(2); //P2 turn
         drawHits_Miss(2);
         drawPreview(2);
-        WaitForTime(10);
+        if (isAllShipsSunk(1))
+        {
+            DrawWordLine("WINNERRR Player 2", 5, 5);
+            gameOver = 1;
+            winningPlayer = 2;
+        }
+        WaitForTime(2);
         //WaitForButtonPress();
     }
+
     return 0;
 }
 
@@ -1151,4 +1216,22 @@ int WaitForTime(int seconds)
         *led_ptr = F;
     }
     return 1;
+}
+
+bool isAllShipsSunk(int currPlayer)
+{
+    Ship *s = (currPlayer == 1) ? Player2Ships : Player1Ships;
+
+    bool allSunk = 1;
+    //iterate through all ships
+    for (int i = 0; i < 5; i++)
+    {
+        if (s->sunk == 0)
+        {
+            allSunk = 0;
+            break;
+        }
+    }
+
+    return allSunk;
 }
