@@ -211,7 +211,7 @@ void drawPreview(int currPlayer);
 //Returns keyboard key press
 char WaitForKeyPress(); //BROKEN ATM
 
-int WaitForTime(int seconds);
+int WaitForTime(double seconds);
 
 bool isAllShipsSunk(int currPlayer);
 
@@ -220,19 +220,15 @@ int main(void)
     volatile int *pixel_ctrl_ptr = (int *)PIXEL_BUF_CTRL_BASE;
     /* Read location of the pixel buffer from the pixel buffer controller */
     pixel_buffer_start = *pixel_ctrl_ptr;
-    volatile int done = WaitForTime(5);
-    if (done)
-    {
-        clear_screen();
-        clearText();
-        DrawGrid();
+    clear_screen();
+    clearText();
+    DrawGrid();
 
-        Setup();
-        printf("1");
+    Setup();
+    //printf("1");
 
-        drawShipTest();
-        playGame();
-    }
+    //drawShipTest();
+    playGame();
 }
 
 Ship translateShip(Ship myShip, int x, int y)
@@ -996,9 +992,20 @@ void takeTurn(int currPlayer)
         {
             DrawWordLine("HIT!", 5, 0);
         }
-    }
 
-    DrawGrid();
+        DrawCursor(shot.x, shot.y);
+        drawHits_Miss(2);
+        drawPreview(2);
+
+        WaitForTime(0.5);
+        DrawGrid();
+        WaitForTime(0.5);
+        DrawCursor(shot.x, shot.y);
+        WaitForTime(0.5);
+        DrawGrid();
+        WaitForTime(0.5);
+        DrawCursor(shot.x, shot.y);
+    }
 }
 
 int hitType(int x, int y, int currPlayer)
@@ -1082,17 +1089,18 @@ int playGame()
         }
         WaitForTime(2);
 
+
+        DrawGrid();
         ClearBoard();
         clearText();
+
         //Draw grid for Player 2
         DrawWordLine("P2 Turn", 0, 0);
         drawAllPlacedShips(1);
         drawPreview(2);
         drawHits_Miss(2);
-        //Draw grid for Player 2
         takeTurn(2); //P2 turn
-        drawHits_Miss(2);
-        drawPreview(2);
+
         if (isAllShipsSunk(1))
         {
             DrawWordLine("WINNERRR Player 2", 5, 5);
@@ -1100,9 +1108,24 @@ int playGame()
             winningPlayer = 2;
         }
         WaitForTime(2);
-        //WaitForButtonPress();
+        DrawGrid();
     }
 
+    //GameOver!
+    if (winningPlayer == 2)
+    {
+        clearText();
+        ClearBoard();
+        //Draw grid for Player 1
+        DrawWordLine("P2 WINS", 0, 0);
+
+        drawAllPlacedShips(2); //DEBUGGING
+
+        //Draw preview of player 2's ships
+        drawPreview(1);
+        drawHits_Miss(1);
+    }
+    WaitForButtonPress();
     return 0;
 }
 
@@ -1187,7 +1210,7 @@ void drawHits_Miss(int currPlayer)
     }
 }
 
-int WaitForTime(int seconds)
+int WaitForTime(double seconds)
 {
     //Clock speed -> 200 MHz
     int counterVal = seconds * 200000000;
