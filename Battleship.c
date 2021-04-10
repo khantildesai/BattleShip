@@ -176,6 +176,8 @@ bool placementValid(int playerNum, Ship);
 bool placementValid1(Ship thisShip);
 bool placementValid2(Ship thisShip);
 void drawAllPlacedShips(int playerNum);
+void drawHex(int HexNum, int num);
+int HexPattern(int num);
 
 //Checks if a x y guess was hit or miss
 int hitType(int x, int y, int currPlayer);
@@ -223,7 +225,9 @@ int main(void)
     clear_screen();
     clearText();
     DrawGrid();
-
+	
+	drawHex(2, -1);
+	
     Setup();
     //printf("1");
 
@@ -231,19 +235,36 @@ int main(void)
     playGame();
 }
 
+void drawHex(int HexNum, int num){
+	int * hexPtr = (int *)HEX3_HEX0_BASE;
+	int * hexPtr2 = (int *)HEX5_HEX4_BASE;
+	int patt = HexPattern(num);
+	if (HexNum < 4){
+		patt = patt << (8*HexNum);
+		*(hexPtr) = patt;
+	}
+	else {
+		patt = patt << (8*(HexNum%4));
+		*(hexPtr2) = patt;
+	}
+}
+
+int HexPattern(int num){
+	if (num == 0) return 0b00111111;
+	else if (num == 1) return 0b00000110;
+	else if (num == 2) return 0b01011011;
+	else if (num == 3) return 0b01001111;
+	else if (num == 4) return 0b01100110;
+	else if (num == 5) return 0b01101101;
+	else if (num == 6) return 0b01111101;
+	else if (num == 7) return 0b00000111;
+	else if (num == 8) return 0b01111111;
+	else if (num == 9) return 0b01101111;
+	else return 0b00000000;
+}
+
 Ship translateShip(Ship myShip, int x, int y)
 {
-    //check validity of translation
-    if ((x < -1) | (x > 1) | (y < -1) | (y > 1))
-        return myShip;
-    if ((myShip.type + myShip.Segments[0].X + x - 1) > 9)
-        return myShip;
-    if ((myShip.Segments[0].X + x) < 0)
-        return myShip;
-    if ((myShip.Segments[0].Y + y) > 9)
-        return myShip;
-    if ((myShip.Segments[0].Y + y) < 0)
-        return myShip;
     //apply translation to myShip
     myShip = translateX(myShip, x);
     myShip = translateY(myShip, y);
@@ -256,11 +277,14 @@ Ship translateY(Ship myShip, int y)
     Ship justInCase = myShip;
     for (int iter = 0; iter < len; iter++)
     {
-        myShip.Segments[iter].Y += y;
-        if (!inBounds(myShip.Segments[iter].X, myShip.Segments[iter].Y))
+        int newY = myShip.Segments[iter].Y + y;
+        if ( newY < 0 || newY > 9)
         {
             return justInCase;
         }
+		else{
+			myShip.Segments[iter].Y = newY;
+		}
     }
     return myShip;
 }
@@ -271,11 +295,14 @@ Ship translateX(Ship myShip, int x)
     Ship justInCase = myShip;
     for (int iter = 0; iter < len; iter++)
     {
-        myShip.Segments[iter].X += x;
-        if (!inBounds(myShip.Segments[iter].X, myShip.Segments[iter].Y))
+        int newX = myShip.Segments[iter].X + x;
+        if (newX < 0 || newX > 9)
         {
             return justInCase;
         }
+		else{
+			myShip.Segments[iter].X = newX;
+		}
     }
     return myShip;
 }
@@ -527,12 +554,12 @@ void Setup()
             if (key == '^')
             {
                 undrawShip(curr);
-                curr = translateShip(curr, 0, 1);
+                curr = translateShip(curr, 0, -1);
             }
             if (key == 'v')
             {
                 undrawShip(curr);
-                curr = translateShip(curr, 0, -1);
+                curr = translateShip(curr, 0, 1);
             }
             if (key == 'X')
             {
@@ -555,6 +582,7 @@ void Setup()
         int transY = (rand() % 2) + placeShipIter * 2;
         int transX = rand() % (9 - curr.type);
         curr = translateShip(curr, transX, transY);
+		drawShip(curr);
         Player2Ships[placeShipIter] = curr;
     }
 }
