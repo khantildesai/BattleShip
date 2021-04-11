@@ -45,6 +45,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <unistd.h>
 
 volatile int pixel_buffer_start; // global variable
 volatile char *char_buffer_start = (char *)0xC9000000;
@@ -180,6 +181,9 @@ bool placementValid2(Ship thisShip);
 void drawAllPlacedShips(int playerNum);
 void drawHex(int HexNum, int num);
 int HexPattern(int num);
+void drawShipBlowPattern(void);
+void drawLed(int LedNum, int on);
+void clearLed(void);
 
 //Checks if a x y guess was hit or miss
 int hitType(int x, int y, int currPlayer);
@@ -229,9 +233,41 @@ int main(void)
     DrawGrid();
 
     drawHex(2, -1);
+    clearLed();
+    drawShipBlowPattern();
+    Setup();
+    //printf("1");
+
+    drawHex(2, -1);
 
     Setup();
     playGame();
+}
+
+void drawShipBlowPattern(void)
+{
+    for (int pattIter = 0; pattIter < 5; pattIter++)
+    {
+        drawLed(4 - pattIter, 1);
+        drawLed(5 + pattIter, 1);
+        for (volatile uint32_t i = 0; i < 200000u; i++)
+            ;
+    }
+    clearLed();
+}
+
+void clearLed(void)
+{
+    int *ptr = (int *)LEDR_BASE;
+    *ptr = 0;
+}
+
+void drawLed(int LedNum, int on)
+{
+    int *ledPtr = (int *)LEDR_BASE;
+    int patt = *ledPtr;
+    patt = patt | (on << LedNum);
+    *(ledPtr) = patt;
 }
 
 void drawHex(int HexNum, int num)
@@ -629,7 +665,7 @@ bool placementValid1(Ship thisShip)
     bool secondCheck = true;
     for (int shipIter = 0; shipIter < numShipsPlaced1; shipIter++)
     {
-        if (shipIter != 2)
+        if (shipIter != 3)
             lookAhead -= 1; //destroyer submarine have same len
         if (thisShip.Segments[0].Y != Player1Ships[shipIter].Segments[0].Y)
             continue;
@@ -919,6 +955,7 @@ void drawHit(int X, int Y)
         draw_line(x0 + iter - 1, y0, x0 + GRID_WIDTH - 5 + iter - 1, y0 + GRID_WIDTH - 1, RED);
         draw_line(x0 + iter - 1, y0 + GRID_WIDTH - 1, x0 + GRID_WIDTH - 5 + iter - 1, y0, RED);
     }
+    drawShipBlowPattern();
 }
 
 void drawMiss(int X, int Y)
