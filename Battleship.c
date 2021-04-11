@@ -107,6 +107,8 @@ typedef struct Coord Coord;
 ShipSegment player1Segs[5][5];
 ShipSegment player2Segs[5][5];
 
+int P1_score, P2_score;
+
 //Top left pixel        5           4                       3                           3           2
 Coord previewCoords[] = {{15 + 2 * previewWidth, 70}, {10 + previewWidth, 70}, {5, 70}, {10 + previewWidth, 70 + 5 * previewWidth}, {5, 70 + 4 * previewWidth}};
 
@@ -183,7 +185,7 @@ int HexPattern(int num);
 int hitType(int x, int y, int currPlayer);
 
 //Checks if all segments have been hit and updates flag
-void updateSunkFlag(Ship *s);
+void updateSunkFlag(int currPlayer);
 void drawShipTest();
 
 //Returns segment that was struck, if none returns nullptr
@@ -199,7 +201,7 @@ void drawShipPreview(int currPlayer);
 void drawHits_Miss(int currPlayer);
 
 //Pass in current player's turn and user guesses a position
-void takeTurn(int currPlayer);
+bool takeTurn(int currPlayer);
 
 //Draws a rectangle from (x0,y0) to (x1,y1) in colour
 void drawRectangle(int x0, int y0, int x1, int y1, short int colour);
@@ -225,42 +227,54 @@ int main(void)
     clear_screen();
     clearText();
     DrawGrid();
-	
-	drawHex(2, -1);
-	
-    Setup();
-    //printf("1");
 
-    //drawShipTest();
+    drawHex(2, -1);
+
+    Setup();
     playGame();
 }
 
-void drawHex(int HexNum, int num){
-	int * hexPtr = (int *)HEX3_HEX0_BASE;
-	int * hexPtr2 = (int *)HEX5_HEX4_BASE;
-	int patt = HexPattern(num);
-	if (HexNum < 4){
-		patt = patt << (8*HexNum);
-		*(hexPtr) = patt;
-	}
-	else {
-		patt = patt << (8*(HexNum%4));
-		*(hexPtr2) = patt;
-	}
+void drawHex(int HexNum, int num)
+{
+    int *hexPtr = (int *)HEX3_HEX0_BASE;
+    int *hexPtr2 = (int *)HEX5_HEX4_BASE;
+    int patt = HexPattern(num);
+    if (HexNum < 4)
+    {
+        patt = patt << (8 * HexNum);
+        *(hexPtr) = patt;
+    }
+    else
+    {
+        patt = patt << (8 * (HexNum % 4));
+        *(hexPtr2) = patt;
+    }
 }
 
-int HexPattern(int num){
-	if (num == 0) return 0b00111111;
-	else if (num == 1) return 0b00000110;
-	else if (num == 2) return 0b01011011;
-	else if (num == 3) return 0b01001111;
-	else if (num == 4) return 0b01100110;
-	else if (num == 5) return 0b01101101;
-	else if (num == 6) return 0b01111101;
-	else if (num == 7) return 0b00000111;
-	else if (num == 8) return 0b01111111;
-	else if (num == 9) return 0b01101111;
-	else return 0b00000000;
+int HexPattern(int num)
+{
+    if (num == 0)
+        return 0b00111111;
+    else if (num == 1)
+        return 0b00000110;
+    else if (num == 2)
+        return 0b01011011;
+    else if (num == 3)
+        return 0b01001111;
+    else if (num == 4)
+        return 0b01100110;
+    else if (num == 5)
+        return 0b01101101;
+    else if (num == 6)
+        return 0b01111101;
+    else if (num == 7)
+        return 0b00000111;
+    else if (num == 8)
+        return 0b01111111;
+    else if (num == 9)
+        return 0b01101111;
+    else
+        return 0b00000000;
 }
 
 Ship translateShip(Ship myShip, int x, int y)
@@ -278,13 +292,14 @@ Ship translateY(Ship myShip, int y)
     for (int iter = 0; iter < len; iter++)
     {
         int newY = myShip.Segments[iter].Y + y;
-        if ( newY < 0 || newY > 9)
+        if (newY < 0 || newY > 9)
         {
             return justInCase;
         }
-		else{
-			myShip.Segments[iter].Y = newY;
-		}
+        else
+        {
+            myShip.Segments[iter].Y = newY;
+        }
     }
     return myShip;
 }
@@ -300,9 +315,10 @@ Ship translateX(Ship myShip, int x)
         {
             return justInCase;
         }
-		else{
-			myShip.Segments[iter].X = newX;
-		}
+        else
+        {
+            myShip.Segments[iter].X = newX;
+        }
     }
     return myShip;
 }
@@ -582,7 +598,7 @@ void Setup()
         int transY = (rand() % 2) + placeShipIter * 2;
         int transX = rand() % (9 - curr.type);
         curr = translateShip(curr, transX, transY);
-		drawShip(curr);
+        drawShip(curr);
         Player2Ships[placeShipIter] = curr;
     }
 }
@@ -979,9 +995,10 @@ void clearText()
     }
 }
 
-void takeTurn(int currPlayer)
+bool takeTurn(int currPlayer)
 {
 
+    bool hit = 0;
     Coord shot;
     if (currPlayer == 1)
     {
@@ -1001,7 +1018,9 @@ void takeTurn(int currPlayer)
         else
         {
             DrawWordLine("HIT!", 5, 0);
+            hit = 1;
         }
+        updateSunkFlag(1);
     }
     else
     {
@@ -1019,8 +1038,9 @@ void takeTurn(int currPlayer)
         else
         {
             DrawWordLine("HIT!", 5, 0);
+            hit = 1;
         }
-
+        updateSunkFlag(2);
         DrawCursor(shot.x, shot.y);
         drawHits_Miss(2);
         drawPreview(2);
@@ -1034,6 +1054,8 @@ void takeTurn(int currPlayer)
         WaitForTime(0.5);
         DrawCursor(shot.x, shot.y);
     }
+
+    return hit;
 }
 
 int hitType(int x, int y, int currPlayer)
@@ -1071,26 +1093,36 @@ ShipSegment *SegmentHit(int x, int y, int currPlayer)
     return NULL;
 }
 
-void updateSunkFlag(Ship *s)
+void updateSunkFlag(int currPlayer)
 {
-    int n = s->type;
-
-    for (int i = 0; i < n; i++)
+    for (int shipNum = 0; shipNum < 5; shipNum++)
     {
-        if (s->Segments[i].hit == 0)
-        {
-            return;
-        }
-    }
 
-    s->sunk = 1;
+        //sets ship to enemy ships
+        Ship s = (currPlayer == 2) ? Player1Ships[shipNum] : Player2Ships[shipNum];
+        int n = s.type;
+
+        bool shipSank = 1;
+        for (int i = 0; i < n; i++)
+        {
+            if (s.Segments[i].hit == 0)
+            {
+                shipSank = 0;
+                break;
+            }
+        }
+
+        s.sunk = shipSank;
+    }
+    return;
 }
 
 int playGame()
-{ //NEED TO CHECK WIN CONDITION
+{
     bool gameOver = 0;
 
     int winningPlayer = 0;
+    P1_score = P2_score = 0;
 
     while (!gameOver)
     {
@@ -1106,17 +1138,21 @@ int playGame()
         drawPreview(1);
         drawHits_Miss(1);
         //PLayer 1 guesses
-        takeTurn(1); //PLayer 1s turn
+        if (takeTurn(1))
+        {
+            P1_score++;
+            drawHex2Dig(3, P1_score);
+            if (P1_score == 17)
+            {
+                DrawWordLine("WINNERRR Player 1", 5, 5);
+                gameOver = 1;
+                winningPlayer = 1;
+                break;
+            }
+        } //PLayer 1s turn
         drawHits_Miss(1);
         drawPreview(1);
-        if (isAllShipsSunk(1))
-        {
-            DrawWordLine("WINNERRR Player 1", 5, 5);
-            gameOver = 1;
-            winningPlayer = 1;
-        }
         WaitForTime(2);
-
 
         DrawGrid();
         ClearBoard();
@@ -1127,14 +1163,19 @@ int playGame()
         drawAllPlacedShips(1);
         drawPreview(2);
         drawHits_Miss(2);
-        takeTurn(2); //P2 turn
-
-        if (isAllShipsSunk(1))
+        if (takeTurn(2))
         {
-            DrawWordLine("WINNERRR Player 2", 5, 5);
-            gameOver = 1;
-            winningPlayer = 2;
-        }
+            P2_score++;
+            drawHex2Dig(1, P2_score);
+
+            if (P2_score == 17)
+            {
+                DrawWordLine("WINNERRR Player 2", 5, 5);
+                gameOver = 1;
+                winningPlayer = 2;
+            }
+        } //P2 turn
+
         WaitForTime(2);
         DrawGrid();
     }
@@ -1152,6 +1193,19 @@ int playGame()
         //Draw preview of player 2's ships
         drawPreview(1);
         drawHits_Miss(1);
+    }
+    else
+    {
+        clearText();
+        ClearBoard();
+        //Draw grid for Player 1
+        DrawWordLine("P1 WINS!!", 0, 0);
+
+        drawAllPlacedShips(1); //DEBUGGING
+
+        //Draw preview of player 2's ships
+        drawPreview(2);
+        drawHits_Miss(2);
     }
     WaitForButtonPress();
     return 0;
@@ -1241,7 +1295,8 @@ void drawHits_Miss(int currPlayer)
 int WaitForTime(double seconds)
 {
     //Clock speed -> 200 MHz
-    int counterVal = seconds * 200000000;
+    int clkSpeed = 200000000;
+    int counterVal = seconds * clkSpeed;
 
     //Set up base pointers
     int *loadPtr = (int *)TIMER_BASE;
@@ -1258,26 +1313,29 @@ int WaitForTime(double seconds)
     while (F == 1) // Check if interrupt bit is a 0
     {
         F = *interruptPtr & 0x1;
-        *led_ptr = F;
+        int curVal = *(loadPtr + 1) / clkSpeed;
+        drawHex(4, curVal);
+        //*led_ptr = F;
     }
 
     while (F == 0) // Check if interrupt bit is a 0
     {
         F = *interruptPtr & 0x1;
-        *led_ptr = F;
+        int curVal = *(loadPtr + 1) / clkSpeed;
+        drawHex(5, curVal);
+        //*led_ptr = F;
     }
     return 1;
 }
 
 bool isAllShipsSunk(int currPlayer)
 {
-    Ship *s = (currPlayer == 1) ? Player2Ships : Player1Ships;
-
     bool allSunk = 1;
     //iterate through all ships
     for (int i = 0; i < 5; i++)
     {
-        if (s->sunk == 0)
+        Ship s = (currPlayer == 1) ? Player2Ships[i] : Player1Ships[i];
+        if (s.sunk == 0)
         {
             allSunk = 0;
             break;
@@ -1285,4 +1343,31 @@ bool isAllShipsSunk(int currPlayer)
     }
 
     return allSunk;
+}
+
+void drawHex2Dig(int startHex, int val)
+{
+
+    if (val < 9)
+    {
+        drawHex(startHex - 1, val);
+        return;
+    }
+
+    if (val > 9 && val < 100)
+    {
+        int ones = val % 10;
+        int tens = val / 10;
+
+        drawHex(startHex - 1, ones);
+        drawHex(startHex, tens);
+    }
+
+    if (val > 100)
+    {
+        int ones = val % 10;
+        int tens = (val / 10) % 10;
+        drawHex(startHex - 1, ones);
+        drawHex(startHex, tens);
+    }
 }
