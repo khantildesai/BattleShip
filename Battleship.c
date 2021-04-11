@@ -236,11 +236,7 @@ int main(void)
     clearLed();
     drawShipBlowPattern();
     Setup();
-    //printf("1");
-
-    drawHex(2, -1);
-
-    Setup();
+    
     playGame();
 }
 
@@ -271,18 +267,22 @@ void drawLed(int LedNum, int on)
 }
 
 void drawHex(int HexNum, int num)
-{
+{	
+	const int clears1[4] = {0xFFFFFF00, 0xFFFF00FF, 0xFF00FFFF, 0x00FFFFFF};
+	const int clears2[2] = {0xFF00, 0x00FF};
     int *hexPtr = (int *)HEX3_HEX0_BASE;
     int *hexPtr2 = (int *)HEX5_HEX4_BASE;
     int patt = HexPattern(num);
     if (HexNum < 4)
     {
         patt = patt << (8 * HexNum);
+		patt = (*hexPtr & clears1[HexNum]) | patt;
         *(hexPtr) = patt;
     }
     else
     {
         patt = patt << (8 * (HexNum % 4));
+		patt = (*hexPtr2 & clears2[HexNum % 4]) | patt;
         *(hexPtr2) = patt;
     }
 }
@@ -955,7 +955,6 @@ void drawHit(int X, int Y)
         draw_line(x0 + iter - 1, y0, x0 + GRID_WIDTH - 5 + iter - 1, y0 + GRID_WIDTH - 1, RED);
         draw_line(x0 + iter - 1, y0 + GRID_WIDTH - 1, x0 + GRID_WIDTH - 5 + iter - 1, y0, RED);
     }
-    drawShipBlowPattern();
 }
 
 void drawMiss(int X, int Y)
@@ -1178,6 +1177,7 @@ int playGame()
         if (takeTurn(1))
         {
             P1_score++;
+			drawShipBlowPattern();
             drawHex2Dig(3, P1_score);
             if (P1_score == 17)
             {
@@ -1203,6 +1203,7 @@ int playGame()
         if (takeTurn(2))
         {
             P2_score++;
+			drawShipBlowPattern();
             drawHex2Dig(1, P2_score);
 
             if (P2_score == 17)
