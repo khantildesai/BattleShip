@@ -1124,7 +1124,6 @@ Ship translateX(Ship myShip, int x)
 {
     int len = myShip.type;
     Ship justInCase = myShip;
-    drawHex2Dig(1, len);
     for (int iter = 0; iter < len; iter++)
     {
         int newX = myShip.Segments[iter].X + x;
@@ -1462,6 +1461,11 @@ void Setup(bool two_player)
                 {
                     undrawShip(curr);
                     curr = translateShip(curr, 0, 1);
+                }
+                if (key == 'r')
+                {
+                    undrawShip(curr);
+                    curr = rotateShip(curr);
                 }
                 if (key == 'X')
                 {
