@@ -859,7 +859,8 @@ void Setup(bool two_player)
             player2Segs[shipIter][segIter].Y = 0;
         }
     }
-
+	clearText();
+	DrawWordLine("Player1 Place Ships:", 5, 0);
     //iterate over all ships that player will need to make
     for (int placeShipIter = 0; placeShipIter < 5; placeShipIter++)
     {
@@ -902,6 +903,7 @@ void Setup(bool two_player)
             drawShip(curr);
         }
     }
+	clearText();
 	ClearBoard();
 	if (!two_player){
 		//setup computers ships
@@ -916,6 +918,7 @@ void Setup(bool two_player)
 		}
 	}
 	else{
+		DrawWordLine("Player2 Place Ships:", 5, 0);
 		//iterate over all ships that player will need to make
 		for (int placeShipIter = 0; placeShipIter < 5; placeShipIter++)
 		{
