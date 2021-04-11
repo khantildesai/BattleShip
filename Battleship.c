@@ -1357,7 +1357,8 @@ void Setup(bool two_player)
             player2Segs[shipIter][segIter].Y = 0;
         }
     }
-
+	clearText();
+	DrawWordLine("Player1 Place Ships:", 5, 0);
     //iterate over all ships that player will need to make
     for (int placeShipIter = 0; placeShipIter < 5; placeShipIter++)
     {
@@ -1400,65 +1401,65 @@ void Setup(bool two_player)
             drawShip(curr);
         }
     }
-    ClearBoard();
-    if (!two_player)
-    {
-        //setup computers ships
-        for (int placeShipIter = 0; placeShipIter < 5; placeShipIter++)
-        {
-            Ship curr = selectShip(placeShipIter, 2); //second player ships
-            int transY = (rand() % 2) + placeShipIter * 2;
-            int transX = rand() % (9 - curr.type);
-            curr = translateShip(curr, transX, transY);
-            drawShip(curr);
-            Player2Ships[placeShipIter] = curr;
-        }
-    }
-    else
-    {
-        //iterate over all ships that player will need to make
-        for (int placeShipIter = 0; placeShipIter < 5; placeShipIter++)
-        {
-            Ship curr = selectShip(placeShipIter, 2); //ship we will move around and place
-            drawShip(curr);
-            bool placing = true;
-            while (placing)
-            {
-                char key = WaitForButtonPress();
-                if (key == '>')
-                {
-                    undrawShip(curr);
-                    curr = translateShip(curr, 1, 0);
-                }
-                if (key == '<')
-                {
-                    undrawShip(curr);
-                    curr = translateShip(curr, -1, 0);
-                }
-                if (key == '^')
-                {
-                    undrawShip(curr);
-                    curr = translateShip(curr, 0, -1);
-                }
-                if (key == 'v')
-                {
-                    undrawShip(curr);
-                    curr = translateShip(curr, 0, 1);
-                }
-                if (key == 'X')
-                {
-                    if (placementValid(2, curr))
-                    {
-                        placing = false;
-                        numShipsPlaced2++;
-                        Player2Ships[placeShipIter] = curr;
-                    }
-                }
-                drawAllPlacedShips(2);
-                drawShip(curr);
-            }
-        }
-    }
+	clearText();
+	ClearBoard();
+	if (!two_player){
+		//setup computers ships
+		for (int placeShipIter = 0; placeShipIter < 5; placeShipIter++)
+		{
+			Ship curr = selectShip(placeShipIter, 2); //second player ships
+			int transY = (rand() % 2) + placeShipIter * 2;
+			int transX = rand() % (9 - curr.type);
+			curr = translateShip(curr, transX, transY);
+			drawShip(curr);
+			Player2Ships[placeShipIter] = curr;
+		}
+	}
+	else{
+		DrawWordLine("Player2 Place Ships:", 5, 0);
+		//iterate over all ships that player will need to make
+		for (int placeShipIter = 0; placeShipIter < 5; placeShipIter++)
+		{
+			Ship curr = selectShip(placeShipIter, 2); //ship we will move around and place
+			drawShip(curr);
+			bool placing = true;
+			while (placing)
+			{
+				char key = WaitForButtonPress();
+				if (key == '>')
+				{
+					undrawShip(curr);
+					curr = translateShip(curr, 1, 0);
+				}
+				if (key == '<')
+				{
+					undrawShip(curr);
+					curr = translateShip(curr, -1, 0);
+				}
+				if (key == '^')
+				{
+					undrawShip(curr);
+					curr = translateShip(curr, 0, -1);
+				}
+				if (key == 'v')
+				{
+					undrawShip(curr);
+					curr = translateShip(curr, 0, 1);
+				}
+				if (key == 'X')
+				{
+					if (placementValid(2, curr))
+					{
+						placing = false;
+						numShipsPlaced2++;
+						Player2Ships[placeShipIter] = curr;
+					}
+				}
+				drawAllPlacedShips(2);
+				drawShip(curr);
+			}
+		}
+	}
 }
 
 void drawAllPlacedShips(int playerNum)
