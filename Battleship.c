@@ -486,6 +486,23 @@ int main(void)
     if (selectGameMode() == 1)
     {
         TwoPlayers = 1;
+
+        drawRectangle(100, 68, 110, 80, RED);
+        WaitForTime(0.7, 0);
+        drawRectangle(100, 68, 110, 80, 0x0);
+        WaitForTime(0.7, 0);
+        drawRectangle(100, 68, 110, 80, RED);
+        WaitForTime(0.7, 0);
+    }
+    else
+    {
+
+        drawRectangle(97, 35, 110, 50, RED);
+        WaitForTime(0.7, 0);
+        drawRectangle(97, 35, 110, 50, 0x0);
+        WaitForTime(0.7, 0);
+        drawRectangle(97, 35, 110, 50, RED);
+        WaitForTime(0.7, 0);
     }
     clear_screen();
     clearText();
@@ -1576,7 +1593,7 @@ int WaitForTime(double seconds, bool display)
         F = *interruptPtr & 0x1;
         int curVal = *(loadPtr + 1) / clkSpeed;
         if (display)
-            drawHex2Dig(4, curVal);
+            drawHex2Dig(5, curVal);
         //*led_ptr = F;
     }
 
@@ -1658,6 +1675,17 @@ int selectGameMode()
     {
         sw_val = *(sw_ptr);
 
+        drawHex2Dig(1, sw_val);
+
+        if ((sw_val & 0b10) == 2)
+        {
+            upDown1 = 1;
+        }
+        else if (upDown1)
+        {
+            return 1;
+        }
+
         if ((sw_val & 0x1) == 1)
         {
             upDown0 = 1;
@@ -1665,15 +1693,6 @@ int selectGameMode()
         else if (upDown0)
         {
             return 0;
-        }
-
-        if ((sw_val & 0x2) == 1)
-        {
-            upDown1 = 1;
-        }
-        else if (upDown1)
-        {
-            return 1;
         }
     }
 }
