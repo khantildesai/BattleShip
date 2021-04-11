@@ -357,6 +357,8 @@ int P1_score, P2_score;
 //Top left pixel        5           4                       3                           3           2
 Coord previewCoords[] = {{15 + 2 * previewWidth, 70}, {10 + previewWidth, 70}, {5, 70}, {10 + previewWidth, 70 + 5 * previewWidth}, {5, 70 + 4 * previewWidth}};
 
+//Set the gamemode
+bool TwoPlayers;
 //Allows user to select position of their ships
 void Setup();
 //swaps two integers
@@ -474,14 +476,17 @@ bool isAllShipsSunk(int currPlayer);
 
 int main(void)
 {
+    TwoPlayers = 0;
     volatile int *pixel_ctrl_ptr = (int *)PIXEL_BUF_CTRL_BASE;
     /* Read location of the pixel buffer from the pixel buffer controller */
     pixel_buffer_start = *pixel_ctrl_ptr;
     clear_screen();
     clearText();
     drawTitleScreen();
-    WaitForTime(30, 0);
-    selectGameMode();
+    if (selectGameMode() == 1)
+    {
+        TwoPlayers = 1;
+    }
     clear_screen();
     clearText();
 
