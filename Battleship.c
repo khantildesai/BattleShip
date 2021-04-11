@@ -518,7 +518,7 @@ int main(void)
     drawHex(2, -1);
     clearLed();
     drawShipBlowPattern();
-    Setup(true);
+    Setup(TwoPlayers);
 
     playGame();
 }
@@ -908,7 +908,7 @@ void Setup(bool two_player)
             drawShip(curr);
         }
     }
-
+    ClearBoard();
     if (!two_player)
     {
         //setup computers ships
