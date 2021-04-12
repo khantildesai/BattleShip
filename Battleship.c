@@ -1334,7 +1334,8 @@ int P1_score, P2_score;
 Coord previewCoords[] = {{15 + 2 * previewWidth, 70}, {10 + previewWidth, 70}, {5, 70}, {10 + previewWidth, 70 + 5 * previewWidth}, {5, 70 + 4 * previewWidth}};
 
 //Set the gamemode
-bool TwoPlayers;
+bool TwoPlayers, debug, skipToEnd;
+
 //Allows user to select position of their ships
 void Setup(bool two_player);
 //swaps two integers
@@ -1425,8 +1426,8 @@ ShipSegment *SegmentHitSetup(int x, int y, int currPlayer);
 //Wrapper for entire game play, alternated until one player wins
 int playGame();
 
-//Draws the ships
-void drawShipPreview(int currPlayer);
+//Draws small ship preview of oppoents ships in bottom left
+void drawShipPreview();
 
 //Draws the previous attempts of a player
 void drawHits_Miss(int currPlayer);
@@ -1440,12 +1441,13 @@ void drawRectangle(int x0, int y0, int x1, int y1, short int colour);
 //Draws the hit previews for a specified ship
 void drawPreviewHit(int shipNum, int segNum);
 
-//Pass Current Player's turn
+////Draws all hit previews
 void drawPreview(int currPlayer);
 
 //Gamemode SW 0  = 1 player (MODE 0); SW 1 = 2 PLayer (MODE 1)
 int selectGameMode();
 
+//time delay can display time remainging in seconds on Hex display54
 int WaitForTime(double seconds, bool display);
 
 //Draws a 2 digit number on the hex displays starting at highest display (startHEx)
@@ -1457,40 +1459,59 @@ bool isAllShipsSunk(int currPlayer);
 //Draws transition screen
 void drawTransitionTo(int nextPlayer);
 
+//Draws win screen depending on winning player
 void drawWinScreen(int winner);
+
+//Displays winning player on hexs and shifts after 4 seconds
+void drawHexWinner(int winner);
 
 int main(void)
 {
+    //Clears all HEX displays
     for (int i = 0; i < 6; i++)
     {
         drawHex(i, -1);
     }
 
+    //Resets global bools
+    debug = 0;
     TwoPlayers = 0;
+    skipToEnd = 0;
+
     volatile int *pixel_ctrl_ptr = (int *)PIXEL_BUF_CTRL_BASE;
-    /* Read location of the pixel buffer from the pixel buffer controller */
     pixel_buffer_start = *pixel_ctrl_ptr;
+
+    //Clears Screen and text buffers
     clear_screen();
     clearText();
+
+    //Draws title screen and waits for selection
     drawTitleScreen();
     if (selectGameMode() == 1)
     {
         TwoPlayers = 1;
 
-        drawRectangle(100, 68, 110, 80, RED);
-        WaitForTime(0.7, 0);
-        drawRectangle(100, 68, 110, 80, 0x0);
-        WaitForTime(0.7, 0);
+        //Blink Red Box over select gamemode
+        for (int i = 0; i < 2; i++)
+        {
+            drawRectangle(100, 68, 110, 80, RED);
+            WaitForTime(0.7, 0);
+            drawRectangle(100, 68, 110, 80, 0x0);
+            WaitForTime(0.7, 0);
+        }
         drawRectangle(100, 68, 110, 80, RED);
         WaitForTime(0.7, 0);
     }
     else
     {
-
-        drawRectangle(97, 35, 110, 50, RED);
-        WaitForTime(0.7, 0);
-        drawRectangle(97, 35, 110, 50, 0x0);
-        WaitForTime(0.7, 0);
+        //Blink Red Box over select gamemode
+        for (int i = 0; i < 2; i++)
+        {
+            drawRectangle(97, 35, 110, 50, RED);
+            WaitForTime(0.7, 0);
+            drawRectangle(97, 35, 110, 50, 0x0);
+            WaitForTime(0.7, 0);
+        }
         drawRectangle(97, 35, 110, 50, RED);
         WaitForTime(0.7, 0);
     }
@@ -1501,10 +1522,15 @@ int main(void)
 
     drawHex(2, -1);
     clearLed();
-    drawShipBlowPattern();
-    Setup(TwoPlayers);
+    //drawShipBlowPattern();
+    if (!skipToEnd)
+    {
+        Setup(TwoPlayers);
+    }
 
-    playGame();
+    drawHexWinner(playGame());
+
+    return 0;
 }
 
 void drawShipBlowPattern(void)
@@ -1681,62 +1707,62 @@ Ship rotateDown(Ship myShip)
     return myShip;
 }
 
-void drawShipTest()
-{
-    ShipSegment seg1 = ShipSegmentDefault;
-    ShipSegment seg2 = ShipSegmentDefault;
-    ShipSegment seg3 = ShipSegmentDefault;
-    ShipSegment seg4 = ShipSegmentDefault;
-    ShipSegment seg5 = ShipSegmentDefault;
-    seg1.type = 0;
-    seg1.X = 1;
-    seg1.Y = 7;
-    seg2.type = 0;
-    seg2.X = 1;
-    seg2.Y = 6;
-    seg3.type = 0;
-    seg3.X = 1;
-    seg3.Y = 5;
-    seg4.type = 0;
-    seg4.X = 1;
-    seg4.Y = 4;
-    seg5.type = 0;
-    seg5.X = 1;
-    seg5.Y = 3;
+// void drawShipTest()
+// {
+//     ShipSegment seg1 = ShipSegmentDefault;
+//     ShipSegment seg2 = ShipSegmentDefault;
+//     ShipSegment seg3 = ShipSegmentDefault;
+//     ShipSegment seg4 = ShipSegmentDefault;
+//     ShipSegment seg5 = ShipSegmentDefault;
+//     seg1.type = 0;
+//     seg1.X = 1;
+//     seg1.Y = 7;
+//     seg2.type = 0;
+//     seg2.X = 1;
+//     seg2.Y = 6;
+//     seg3.type = 0;
+//     seg3.X = 1;
+//     seg3.Y = 5;
+//     seg4.type = 0;
+//     seg4.X = 1;
+//     seg4.Y = 4;
+//     seg5.type = 0;
+//     seg5.X = 1;
+//     seg5.Y = 3;
 
-    ShipSegment seg6 = ShipSegmentDefault;
-    ShipSegment seg7 = ShipSegmentDefault;
-    ShipSegment seg8 = ShipSegmentDefault;
-    ShipSegment seg9 = ShipSegmentDefault;
-    ShipSegment seg0 = ShipSegmentDefault;
-    seg6.type = 0;
-    seg6.X = 5;
-    seg6.Y = 7;
-    seg7.type = 0;
-    seg7.X = 5;
-    seg7.Y = 6;
-    seg8.type = 0;
-    seg8.X = 5;
-    seg8.Y = 5;
-    seg9.type = 0;
-    seg9.X = 5;
-    seg9.Y = 4;
-    seg0.type = 0;
-    seg0.X = 5;
-    seg0.Y = 3;
+//     ShipSegment seg6 = ShipSegmentDefault;
+//     ShipSegment seg7 = ShipSegmentDefault;
+//     ShipSegment seg8 = ShipSegmentDefault;
+//     ShipSegment seg9 = ShipSegmentDefault;
+//     ShipSegment seg0 = ShipSegmentDefault;
+//     seg6.type = 0;
+//     seg6.X = 5;
+//     seg6.Y = 7;
+//     seg7.type = 0;
+//     seg7.X = 5;
+//     seg7.Y = 6;
+//     seg8.type = 0;
+//     seg8.X = 5;
+//     seg8.Y = 5;
+//     seg9.type = 0;
+//     seg9.X = 5;
+//     seg9.Y = 4;
+//     seg0.type = 0;
+//     seg0.X = 5;
+//     seg0.Y = 3;
 
-    ShipSegment myArr[] = {seg1, seg2, seg3, seg4, seg5};
-    ShipSegment tArr[] = {seg6, seg7, seg8, seg9, seg0};
-    Ship myShip = Carrier;
-    Ship tShip = Carrier;
-    myShip.Segments = myArr;
-    tShip.Segments = tArr;
-    drawShip(myShip);
-    tShip = rotateShip(tShip);
-    drawShip(tShip);
-    Ship t2Ship = translateShip(tShip, 1, 1);
-    drawShip(t2Ship);
-}
+//     ShipSegment myArr[] = {seg1, seg2, seg3, seg4, seg5};
+//     ShipSegment tArr[] = {seg6, seg7, seg8, seg9, seg0};
+//     Ship myShip = Carrier;
+//     Ship tShip = Carrier;
+//     myShip.Segments = myArr;
+//     tShip.Segments = tArr;
+//     drawShip(myShip);
+//     tShip = rotateShip(tShip);
+//     drawShip(tShip);
+//     Ship t2Ship = translateShip(tShip, 1, 1);
+//     drawShip(t2Ship);
+// }
 
 void plot_pixel(int x, int y, short int line_color)
 {
@@ -1922,7 +1948,6 @@ void Setup(bool two_player)
             int transY = (rand() % 2) + placeShipIter * 2;
             int transX = rand() % (9 - curr.type);
             curr = translateShip(curr, transX, transY);
-            drawShip(curr);
             Player2Ships[placeShipIter] = curr;
         }
     }
@@ -2009,6 +2034,7 @@ bool placementValid1(Ship thisShip)
 {
     int numSegs = thisShip.type;
 
+    //Iterates through segments and checks if there is another segment at that position
     for (int seg = 0; seg < numSegs; seg++)
     {
         if (SegmentHitSetup(thisShip.Segments[seg].X, thisShip.Segments[seg].Y, 1) != NULL)
@@ -2105,7 +2131,7 @@ void DrawCursor(int gridx, int gridy)
 
     //Draws the 4 line segments
     if (y0 > 0)
-    {
+    {                                                    //GUARD AGAINST DRAWING OUT OF BOUANDS
         draw_line(x0 - 2, y0 - 1, 22 + x0, y0 - 1, RED); // top
     }
     draw_line(x0 - 2, 23 + y0, 22 + x0, 23 + y0, RED);   // bot
@@ -2121,44 +2147,49 @@ Coord ChooseHitPlacement(int x_start, int y_start)
     while (1)
     {
         char key = WaitForButtonPress();
-        if (key == 'X')
+
+        //Waits for valid key press and checks bounds
+        if (key == 'X') //FIRE
         {
             break;
         }
-        if (key == '>')
-        { //Right
+        if (key == '>') //RIGHT
+        {               //Right
             x_start++;
             if (!inBounds(x_start, y_start))
                 x_start--;
         }
-        else if (key == '<')
-        { //LEFT
+        else if (key == '<') //LEFT
+        {                    //LEFT
             x_start--;
             if (!inBounds(x_start, y_start))
                 x_start++;
         }
-        else if (key == '^')
-        { //UP
+        else if (key == '^') //UP
+        {                    //UP
             y_start--;
             if (!inBounds(x_start, y_start))
                 y_start++;
         }
-        else if (key == 'v')
-        { //DOWN
+        else if (key == 'v') //DOWN
+        {                    //DOWN
             y_start++;
             if (!inBounds(x_start, y_start))
                 y_start--;
         }
-        DrawGrid();
 
+        //Removes old cursor and draws new one
+        DrawGrid();
         DrawCursor(x_start, y_start);
     }
+
+    //Returns selected position
     Coord placement = {x_start, y_start};
     return placement;
 }
 
 Coord randPlacement()
-{
+{ //Returns random coordianted between 0-9
     Coord shot = {rand() % 10, rand() % 10};
     return shot;
 }
@@ -2175,10 +2206,14 @@ char WaitForButtonPress()
     int sw_val = 0;
     bool upDown = 0;
     bool upDown2 = 0;
+
+    //While No Key pressed:
     while (key_val == 0)
     {
         key_val = *(key_ptr + 3);
         sw_val = *(sw_ptr);
+
+        //Check SW0
         if ((sw_val & 0x1) == 1)
         {
             upDown = 1;
@@ -2188,6 +2223,7 @@ char WaitForButtonPress()
             return 'X';
         }
 
+        //Check SW 1
         if ((sw_val & 0x2) == 2)
         {
             upDown2 = 1;
@@ -2198,22 +2234,24 @@ char WaitForButtonPress()
         }
     }
 
-    if (key_val == 1) //KEY0
-    {                 //DOWN
+    //Checks which key was pressed (NOTE GUARD FOR ALL PRESSED AT ONCE)
+    if ((key_val & 1) == 1) //KEY0
+    {                       //DOWN
         return 'v';
     }
-    else if (key_val == 2) //KEY1
-    {                      //UP
+    else if ((key_val & 0b10) == 2) //KEY1
+    {                               //UP
         return '^';
     }
-    else if (key_val == 4) //KEY2
-    {                      //RIGHT
+    else if ((key_val & 0b100) == 4) //KEY2
+    {                                //RIGHT
         return '>';
     }
-    else if (key_val == 8) //KEY3
-    {                      //LEFT
+    else if ((key_val & 0b1000) == 8) //KEY3
+    {                                 //LEFT
         return '<';
     }
+    //L => Unknown Press
     return 'L';
 }
 
@@ -2280,17 +2318,19 @@ void ClearGridSeg(int gridx, int gridy)
     int x0 = GRID_BASE_X + gridx * DIST_NEXT;
     int y0 = gridy * DIST_NEXT;
 
+    //Iterates through x and y values of one square (INSIDE OF GRID)
     for (int dx = 0; dx < GRID_WIDTH; dx++)
     {
         for (int dy = 0; dy < GRID_WIDTH; dy++)
         {
-            plot_pixel(x0 - 1 + dx, y0 + dy, 0x0);
+            plot_pixel(x0 - 1 + dx, y0 + dy, 0x0); //wrties Black to pixel buffer
         }
     }
 }
 
 void ClearBoard()
 {
+    //Clears the entire board by clearing each seg
     for (int GridX = 0; GridX < 10; GridX++)
     {
         for (int GridY = 0; GridY < 10; GridY++)
@@ -2302,6 +2342,8 @@ void ClearBoard()
 
 bool inBounds(int x, int y)
 {
+
+    //Checks if x and Y are in grid bound (0-9)
     if ((x >= 0 && x < 10) && (y >= 0 && y < 10))
     {
         return 1;
@@ -2314,7 +2356,7 @@ bool inBounds(int x, int y)
 
 void DrawWordLine(char *cs, int lineY, int x)
 {
-
+    //Writes to text buffer at Y value and starts at x value
     int offset = (lineY << 7) + x;
     while (*(cs))
     {
@@ -2326,6 +2368,7 @@ void DrawWordLine(char *cs, int lineY, int x)
 
 void clearText()
 {
+    //Clears all text in text buffer
     int offset = 0;
     for (int pixelNum = 0; pixelNum < 4800; pixelNum++)
     {
@@ -2348,8 +2391,10 @@ bool takeTurn(int currPlayer)
             //Check if position has already been guessed
             shot = ChooseHitPlacement(shot.x, shot.y);
         }
+        //Update player's gameboard to hit value (1 = miss, 2 = hit)
         Player2GameBoard[shot.x][shot.y] = hitType(shot.x, shot.y, currPlayer);
 
+        //Display type of hit
         if (Player2GameBoard[shot.x][shot.y] == 1)
         {
             DrawWordLine("Miss", 5, 0);
@@ -2359,11 +2404,13 @@ bool takeTurn(int currPlayer)
             DrawWordLine("HIT!", 5, 0);
             hit = 1;
         }
+        //Update sunk flag and dislayed hit
         updateSunkFlag(1);
         DrawCursor(shot.x, shot.y);
         drawHits_Miss(1);
         drawPreview(1);
 
+        //Flash cursor on selected position
         for (int i = 0; i < 3; i++)
         {
             DrawGrid();
@@ -2375,9 +2422,10 @@ bool takeTurn(int currPlayer)
     else
     {
         if (TwoPlayers)
-        {
+        { //SECOND PLAYER
             shot = ChooseHitPlacement(5, 5);
 
+            //While position already guessed ask for new position
             while (Player1GameBoard[shot.x][shot.y] != 0)
             {
                 //Check if position has already been guessed
@@ -2385,15 +2433,17 @@ bool takeTurn(int currPlayer)
             }
         }
         else
-        {
+        { //COMPUTER
             do
             { //Generate Guess
                 shot = randPlacement();
             } while (Player1GameBoard[shot.x][shot.y] != 0); // Check if position alreadt guessed
         }
 
-        //Position not guessed
+        //Position not guessed => update gameboard with hit type
         Player1GameBoard[shot.x][shot.y] = hitType(shot.x, shot.y, currPlayer);
+
+        //Display hit or miss
         if (Player1GameBoard[shot.x][shot.y] == 1)
         {
             DrawWordLine("Miss", 5, 0);
@@ -2403,11 +2453,14 @@ bool takeTurn(int currPlayer)
             DrawWordLine("HIT!", 5, 0);
             hit = 1;
         }
+
+        //Update sunk flag and hits displayed
         updateSunkFlag(2);
         DrawCursor(shot.x, shot.y);
         drawHits_Miss(2);
         drawPreview(2);
 
+        //Flash cursor on selected position
         for (int i = 0; i < 3; i++)
         {
             DrawGrid();
@@ -2416,13 +2469,15 @@ bool takeTurn(int currPlayer)
             WaitForTime(0.5, 0);
         }
     }
-
+    //Return is hit was sucessful
     return hit;
 }
 
 int hitType(int x, int y, int currPlayer)
 {
+    //Get hit segment
     ShipSegment *hitSeg = SegmentHit(x, y, currPlayer);
+    //If null => NO SEGMENT HIT
     if (hitSeg == NULL)
     {
         return 1;
@@ -2493,6 +2548,7 @@ ShipSegment *SegmentHitSetup(int x, int y, int currPlayer)
 
 void updateSunkFlag(int currPlayer)
 {
+    //Iterates through each ship
     for (int shipNum = 0; shipNum < 5; shipNum++)
     {
 
@@ -2501,10 +2557,11 @@ void updateSunkFlag(int currPlayer)
         int n = s.type;
 
         bool shipSank = 1;
+        //Iterate through all segments
         for (int i = 0; i < n; i++)
         {
-            if (s.Segments[i].hit == 0)
-            {
+            if (s.Segments[i].hit == 0) //If a segment wasn't hit
+            {                           //NOT SANK
                 shipSank = 0;
                 break;
             }
@@ -2517,9 +2574,11 @@ void updateSunkFlag(int currPlayer)
 
 int playGame()
 {
-    bool gameOver = 0;
+    bool gameOver;
+    gameOver = (skipToEnd) ? 1 : 0;
 
-    int winningPlayer = 0;
+    int winningPlayer;
+    winningPlayer = (skipToEnd) ? 1 : 0;
     P1_score = P2_score = 0;
 
     //set player scores on hex to 0
@@ -2536,20 +2595,22 @@ int playGame()
         DrawWordLine("KEYS - Move Cursor", 8, 0);
         DrawWordLine("SW0 - Fire!", 10, 0);
 
-        drawAllPlacedShips(2); //DEBUGGING
+        if (debug)
+        {
+            drawAllPlacedShips(2); //DEBUGGING
+        }
 
         //Draw preview of player 2's ships
         drawPreview(1);
         drawHits_Miss(1);
         //PLayer 1 guesses
-        if (takeTurn(1)) //
+        if (takeTurn(1))
         {
             P1_score++;
             drawShipBlowPattern();
             drawHex2Dig(3, P1_score);
             if (P1_score == 17)
             {
-                DrawWordLine("WINNERRR Player 1", 5, 5);
                 gameOver = 1;
                 winningPlayer = 1;
                 break;
@@ -2565,7 +2626,7 @@ int playGame()
         {
             clearText();
             drawTransitionTo(2);
-            WaitForTime(15, 1);
+            WaitForTime(10, 1);
             clear_screen();
         }
         else
@@ -2582,7 +2643,7 @@ int playGame()
         DrawWordLine("KEYS - Move Cursor", 8, 0);
         DrawWordLine("SW0 - Fire!", 10, 0);
 
-        if (!TwoPlayers)
+        if (!TwoPlayers || debug)
         {
             drawAllPlacedShips(1);
         }
@@ -2596,17 +2657,17 @@ int playGame()
 
             if (P2_score == 17)
             {
-                DrawWordLine("WINNERRR Player 2", 5, 5);
                 gameOver = 1;
                 winningPlayer = 2;
             }
         } //P2 turn
 
+        //If two players draw transition slide
         if (TwoPlayers)
         {
             clearText();
             drawTransitionTo(1);
-            WaitForTime(15, 1);
+            WaitForTime(10, 1);
             clear_screen();
         }
         DrawGrid();
@@ -2639,17 +2700,19 @@ int playGame()
         drawPreview(2);
         drawHits_Miss(2);
     }
-    DrawWordLine("PRESS ANY KEY TO CONTINUE", 2, 0);
+    DrawWordLine("PRESS ANY KEY", 2, 0);
+    DrawWordLine("TO CONTINUE", 3, 0);
     WaitForButtonPress();
 
     clearText();
     drawWinScreen(winningPlayer);
 
-    return 0;
+    return winningPlayer;
 }
 
-void drawShipPreview(int currPlayer)
+void drawShipPreview()
 {
+    //Draws ships based on preloaded locations
     int numSegs = 5;
     drawRectangle(previewCoords[0].x, previewCoords[0].y, previewCoords[0].x + previewWidth, previewCoords[0].y + numSegs * previewWidth, BLUE);
     numSegs = 4;
@@ -2663,6 +2726,7 @@ void drawShipPreview(int currPlayer)
 
 void drawRectangle(int x0, int y0, int x1, int y1, short int colour)
 {
+    //Iterates through x positions and draws line from y0 to y1
     for (int dx = 0; dx < x1 - x0; dx++)
     {
         draw_line(x0 + dx, y0, x0 + dx, y1, colour);
@@ -2671,6 +2735,7 @@ void drawRectangle(int x0, int y0, int x1, int y1, short int colour)
 
 void drawPreviewHit(int shipNum, int segNum)
 {
+    //Draws a red x over the specifed segment of the specified ship number
     int x = previewCoords[shipNum].x;
     int y = previewCoords[shipNum].y;
 
@@ -2681,15 +2746,19 @@ void drawPreviewHit(int shipNum, int segNum)
 void drawPreview(int currPlayer)
 {
     DrawWordLine("--- Ship Status --- ", 14, 0);
-    drawShipPreview(currPlayer);
+    //Draws small empty ship outlines bottom left
+    drawShipPreview();
 
+    //Iterates through all ships and draws hit previews
     for (int shipNum = 0; shipNum < 5; shipNum++)
-    {
+    { //Get ship struct and length
         Ship s = (currPlayer == 2) ? Player1Ships[shipNum] : Player2Ships[shipNum];
         int n = s.type;
+
+        //Iterate through each segment checking if it's hit
         for (int i = 0; i < n; i++)
         {
-            if (s.Segments[i].hit == 1)
+            if (s.Segments[i].hit == 1) // if hit draw hit preview
             {
                 drawPreviewHit(shipNum, i);
             }
@@ -2699,28 +2768,30 @@ void drawPreview(int currPlayer)
 
 void drawHits_Miss(int currPlayer)
 {
+
+    //Iterates through each players game board and draws all misses and hits
     for (int x = 0; x < 10; x++)
     {
         for (int y = 0; y < 10; y++)
         {
             if (currPlayer == 1)
             {
-                if (Player2GameBoard[x][y] == 1)
+                if (Player2GameBoard[x][y] == 1) // 1 => Missed
                 {
                     drawMiss(x, y);
                 }
-                else if (Player2GameBoard[x][y] == 2)
+                else if (Player2GameBoard[x][y] == 2) // 2 => HIT
                 {
                     drawHit(x, y);
                 }
             }
             else
             {
-                if (Player1GameBoard[x][y] == 1)
+                if (Player1GameBoard[x][y] == 1) // 1 => Missed
                 {
                     drawMiss(x, y);
                 }
-                else if (Player1GameBoard[x][y] == 2)
+                else if (Player1GameBoard[x][y] == 2) // 2 => HIT
                 {
                     drawHit(x, y);
                 }
@@ -2733,22 +2804,24 @@ int WaitForTime(double seconds, bool display)
 {
     //Clock speed -> 200 MHz
     int clkSpeed = 200000000;
-    int counterVal = seconds * clkSpeed;
-
     //Set up base pointers
     int *loadPtr = (int *)TIMER_BASE;
     int *controlPtr = (int *)(TIMER_BASE + 0x8);
     int *interruptPtr = (int *)(TIMER_BASE + 0xc);
 
+    //Load timer value
+    int counterVal = seconds * clkSpeed;
     *loadPtr = counterVal;
 
-    *controlPtr = 0x5; //Starts timer
-    *interruptPtr = 0x1;
+    *controlPtr = 0x5;   //Starts timer
+    *interruptPtr = 0x1; //Resets F bit
     int F = *interruptPtr & 0x1;
 
     while (F == 1) // Check if interrupt bit is a 0
     {
         F = *interruptPtr & 0x1;
+
+        //loads remainging time in seconds into hex display
         int curVal = *(loadPtr + 1) / clkSpeed;
         if (display)
             drawHex2Dig(5, curVal);
@@ -2758,6 +2831,7 @@ int WaitForTime(double seconds, bool display)
     while (F == 0) // Check if interrupt bit is a 0
     {
         F = *interruptPtr & 0x1;
+        //loads remainging time in seconds into hex display
         int curVal = *(loadPtr + 1) / clkSpeed;
         if (display)
             drawHex2Dig(5, curVal);
@@ -2768,6 +2842,7 @@ int WaitForTime(double seconds, bool display)
 
 bool isAllShipsSunk(int currPlayer)
 {
+    //Checks if all ships have been sunk and returns bool
     bool allSunk = 1;
     //iterate through all ships
     for (int i = 0; i < 5; i++)
@@ -2816,6 +2891,7 @@ void drawHex2Dig(int startHex, int val)
 
 void drawTitleScreen()
 {
+    //Draws title screen from preloaded pixel colour array
     for (int x = 0; x < RESOLUTION_X; x++)
     {
         for (int y = 0; y < RESOLUTION_Y; y++)
@@ -2827,6 +2903,7 @@ void drawTitleScreen()
 
 void drawTransitionTo(int nextPlayer)
 {
+    //Draws transition slide from preloaded pixel colour array
     if (nextPlayer == 2)
     {
         for (int x = 0; x < RESOLUTION_X; x++)
@@ -2854,8 +2931,12 @@ int selectGameMode()
     volatile int *sw_ptr = (int *)SW_BASE;
 
     int sw_val = 0;
+
+    //Bools for if a sw has gone from 1 to 0
     bool upDown0 = 0;
     bool upDown1 = 0;
+    bool upDown9 = 0;
+    bool upDown8 = 0;
 
     while (1)
     {
@@ -2881,11 +2962,32 @@ int selectGameMode()
         {
             return 1;
         }
+
+        //CHECK SW8
+        if ((sw_val & 0b100000000) == 256)
+        {
+            upDown8 = 1;
+        }
+        else if (upDown8)
+        {
+            skipToEnd = 1;
+        }
+
+        //CHECK SW9
+        if ((sw_val & 0b1000000000) == 512)
+        {
+            upDown9 = 1;
+        }
+        else if (upDown9)
+        {
+            debug = 1;
+        }
     }
 }
 
 void drawWinScreen(int winner)
 {
+    //Draws all pixels of preloaded win screens
     if (winner == 2)
     {
         for (int x = 0; x < RESOLUTION_X; x++)
@@ -2905,5 +3007,62 @@ void drawWinScreen(int winner)
                 plot_pixel(x, y, P1_WIN[y][x]);
             }
         }
+    }
+}
+
+void drawHexWinner(int winner)
+{
+    int *hexPtr = (int *)HEX3_HEX0_BASE;
+    int *hexPtr2 = (int *)HEX5_HEX4_BASE;
+    int HEX54, HEX30;
+
+    //Display P1 or P2
+    HEX54 = (winner == 1) ? 0x7306 : 0x735b; //P1 : P2
+    HEX30 = 0x40066D78;                      // -1st
+
+    //Load hex displays
+    *hexPtr2 = HEX54;
+    *hexPtr = HEX30;
+    WaitForTime(4, 0); // 4 second delay
+
+    //Shift to the right every 0.4 seconds and changes direction when it reaches the beginning
+    int changeDir = 0;
+    bool shiftRight = 1;
+    int HEX54C, HEX30C;
+    while (1)
+    {
+        //Makes a copy of Both registers
+        HEX54C = HEX54;
+        HEX30C = HEX30;
+
+        //Checks if pattern has reached the beginning
+        if (changeDir == 6)
+        {
+            //Reset direction check and chnage direction bool
+            changeDir = 0;
+            shiftRight = (shiftRight) ? 0 : 1;
+            WaitForTime(1.5, 0); //Delay 1.5 seconds
+        }
+
+        //Shifts left or right depending on bool
+        if (shiftRight)
+        {
+
+            HEX54 = (HEX54C >> 8 & 0x00FF) | ((HEX30C & 0xFF) << 8);
+            HEX30 = (HEX30C >> 8 & 0x00FFFFFF) | (HEX54C << 24 & 0xFF000000);
+        }
+        else
+        {
+            HEX54 = (HEX54C << 8 & 0xFF00) | (HEX30C >> 24 & 0xFF);
+            HEX30 = (HEX30C << 8 & 0xFFFFFF00) | (HEX54C >> 8);
+        }
+
+        //Loads Hex displays with values
+        *hexPtr = HEX30;
+        *hexPtr2 = HEX54;
+
+        //0.4 second delay and increments position check
+        WaitForTime(0.4, 0);
+        changeDir++;
     }
 }
