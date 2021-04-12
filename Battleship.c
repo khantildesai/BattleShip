@@ -1857,6 +1857,12 @@ void Setup(bool two_player)
     }
     clearText();
     DrawWordLine("Player1 Place Ships:", 5, 0);
+	DrawWordLine("Button0: move Down",10,0);
+	DrawWordLine("Button1: move Up",15,0);
+	DrawWordLine("Button2: move Right",20,0);
+	DrawWordLine("Button3: move Left",25,0);
+	DrawWordLine("Switch1: rotate", 30, 0);
+	DrawWordLine("Switch0: place",35,0);
     //iterate over all ships that player will need to make
     for (int placeShipIter = 0; placeShipIter < 5; placeShipIter++)
     {
@@ -1923,6 +1929,12 @@ void Setup(bool two_player)
     else
     {
         DrawWordLine("Player2 Place Ships:", 5, 0);
+		DrawWordLine("Button0: move Down",10,0);
+		DrawWordLine("Button1: move Up",15,0);
+		DrawWordLine("Button2: move Right",20,0);
+		DrawWordLine("Button3: move Left",25,0);
+		DrawWordLine("Switch1: rotate", 30, 0);
+		DrawWordLine("Switch0: place",35,0);
         //iterate over all ships that player will need to make
         for (int placeShipIter = 0; placeShipIter < 5; placeShipIter++)
         {
