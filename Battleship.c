@@ -1857,12 +1857,12 @@ void Setup(bool two_player)
     }
     clearText();
     DrawWordLine("Player1 Place Ships:", 5, 0);
-	DrawWordLine("Button0: move Down",10,0);
-	DrawWordLine("Button1: move Up",15,0);
-	DrawWordLine("Button2: move Right",20,0);
-	DrawWordLine("Button3: move Left",25,0);
-	DrawWordLine("Switch1: rotate", 30, 0);
-	DrawWordLine("Switch0: place",35,0);
+    DrawWordLine("Button0: move Down", 10, 0);
+    DrawWordLine("Button1: move Up", 15, 0);
+    DrawWordLine("Button2: move Right", 20, 0);
+    DrawWordLine("Button3: move Left", 25, 0);
+    DrawWordLine("Switch1: rotate", 30, 0);
+    DrawWordLine("Switch0: place", 35, 0);
     //iterate over all ships that player will need to make
     for (int placeShipIter = 0; placeShipIter < 5; placeShipIter++)
     {
@@ -1929,12 +1929,12 @@ void Setup(bool two_player)
     else
     {
         DrawWordLine("Player2 Place Ships:", 5, 0);
-		DrawWordLine("Button0: move Down",10,0);
-		DrawWordLine("Button1: move Up",15,0);
-		DrawWordLine("Button2: move Right",20,0);
-		DrawWordLine("Button3: move Left",25,0);
-		DrawWordLine("Switch1: rotate", 30, 0);
-		DrawWordLine("Switch0: place",35,0);
+        DrawWordLine("Button0: move Down", 10, 0);
+        DrawWordLine("Button1: move Up", 15, 0);
+        DrawWordLine("Button2: move Right", 20, 0);
+        DrawWordLine("Button3: move Left", 25, 0);
+        DrawWordLine("Switch1: rotate", 30, 0);
+        DrawWordLine("Switch0: place", 35, 0);
         //iterate over all ships that player will need to make
         for (int placeShipIter = 0; placeShipIter < 5; placeShipIter++)
         {
@@ -2447,6 +2447,18 @@ ShipSegment *SegmentHit(int x, int y, int currPlayer)
         {
             if (s.Segments[i].X == x && s.Segments[i].Y == y)
             { //HIT!
+                bool Sunk = 1;
+                for (int sCheck = 0; sCheck < n; sCheck++)
+                {
+                    if (sCheck != i && s.Segments[sCheck].hit == 0)
+                    {
+                        Sunk = 0;
+                        break;
+                    }
+                }
+
+                if (Sunk)
+                    DrawWordLine("SUNK!", 3, 0);
                 return &s.Segments[i];
             }
         }
@@ -2521,6 +2533,8 @@ int playGame()
 
         //Draw grid for Player 1
         DrawWordLine("P1 Turn", 0, 0);
+        DrawWordLine("KEYS - Move Cursor", 8, 0);
+        DrawWordLine("SW0 - Fire!", 10, 0);
 
         drawAllPlacedShips(2); //DEBUGGING
 
@@ -2565,6 +2579,8 @@ int playGame()
 
         //Draw grid for Player 2
         DrawWordLine("P2 Turn", 0, 0);
+        DrawWordLine("KEYS - Move Cursor", 8, 0);
+        DrawWordLine("SW0 - Fire!", 10, 0);
 
         if (!TwoPlayers)
         {
@@ -2623,7 +2639,7 @@ int playGame()
         drawPreview(2);
         drawHits_Miss(2);
     }
-    DrawWordLine("PRESS ANY KEY TO CONTINUE",2,0);
+    DrawWordLine("PRESS ANY KEY TO CONTINUE", 2, 0);
     WaitForButtonPress();
 
     clearText();
